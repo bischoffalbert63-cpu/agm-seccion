@@ -1,0 +1,14 @@
+{
+  "name": "Sección de Cadetes — AGM",
+  "short_name": "AGM Sección",
+  "description": "Gestión de sección de cadetes de la Academia General Militar",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f1efe8",
+  "theme_color": "#185FA5",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

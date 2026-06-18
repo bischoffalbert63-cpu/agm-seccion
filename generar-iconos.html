@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generar iconos AGM</title></head>
+<body style="font-family:sans-serif;padding:2rem;background:#f1efe8">
+<h2>Generador de iconos para la PWA</h2>
+<p>Pulsa el botón para descargar los dos iconos necesarios.</p>
+<button onclick="gen(192)" style="margin:8px;padding:10px 20px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">Descargar icon-192.png</button>
+<button onclick="gen(512)" style="margin:8px;padding:10px 20px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">Descargar icon-512.png</button>
+<p style="margin-top:1rem;color:#5f5e5a;font-size:13px">Guarda ambos archivos en la misma carpeta que index.html</p>
+<canvas id="c" style="display:none"></canvas>
+<script>
+function gen(size){
+  const c=document.getElementById('c');
+  c.width=size;c.height=size;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#185FA5';
+  ctx.beginPath();
+  ctx.roundRect(0,0,size,size,size*0.18);
+  ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.15)';
+  ctx.beginPath();
+  ctx.roundRect(size*0.1,size*0.1,size*0.8,size*0.8,size*0.12);
+  ctx.fill();
+  ctx.fillStyle='#ffffff';
+  ctx.font=`bold ${size*0.42}px serif`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('⚔', size/2, size*0.45);
+  ctx.font=`bold ${size*0.11}px sans-serif`;
+  ctx.fillText('AGM', size/2, size*0.78);
+  const a=document.createElement('a');
+  a.download=`icon-${size}.png`;
+  a.href=c.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>
