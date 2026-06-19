@@ -21,11 +21,6 @@
   --font:system-ui,-apple-system,sans-serif;
   --topbar-h:52px;--nav-h:48px;--safe-bottom:env(safe-area-inset-bottom,0px);
 }
-@media(prefers-color-scheme:dark){
-  :root{--bg-primary:#1e1e1c;--bg-secondary:#2a2a28;--bg-tertiary:#111110;
-    --text-primary:#f0ede6;--text-secondary:#a8a6a0;--text-tertiary:#666460;
-    --border-t:rgba(255,255,255,0.1);--border-s:rgba(255,255,255,0.2);}
-}
 html,body{height:100%;overscroll-behavior:none}
 body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-primary);display:flex;flex-direction:column}
 .app{display:flex;flex-direction:column;height:100%;max-height:100dvh}
