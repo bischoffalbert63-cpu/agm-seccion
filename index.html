@@ -170,6 +170,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 .sancion-card.muy-grave{border-left:3px solid #791F1F}
 .ej-cadet-block{background:var(--bg-secondary);border-radius:var(--radius-md);padding:12px;margin-bottom:10px;border:0.5px solid var(--border-t)}
 .nota-input{width:100%;padding:10px 12px;border:0.5px solid var(--border-t);border-radius:var(--radius-md);font-size:15px;text-align:center;background:var(--bg-primary);color:var(--text-primary)}
+.foto-placeholder{width:72px;height:72px;border-radius:50%;background:var(--bg-secondary);border:2px dashed var(--border-s);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.foto-preview{width:72px;height:72px;border-radius:50%;object-fit:cover;cursor:pointer;border:2px solid var(--border-t);flex-shrink:0}
+.cadet-foto{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -316,6 +319,14 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <span class="modal-title" id="modal-cadete-title">Añadir cadete</span>
       <button class="btn btn-icon" onclick="closeModal('modal-cadete')"><i class="ti ti-x"></i></button>
     </div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+      <div onclick="document.getElementById('c-foto-input').click()" style="cursor:pointer">
+        <div class="foto-placeholder" id="c-foto-placeholder"><i class="ti ti-camera" style="font-size:22px;color:var(--text-tertiary)"></i></div>
+        <img id="c-foto-preview" class="foto-preview hidden" src="" alt="">
+      </div>
+      <input type="file" id="c-foto-input" accept="image/*" style="display:none" onchange="handleFotoUpload(this)">
+      <div style="font-size:12px;color:var(--text-secondary)">Toca para añadir foto<br><span style="font-size:11px;color:var(--text-tertiary)">Se redimensionará automáticamente</span></div>
+    </div>
     <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;font-weight:500;margin-bottom:8px">Datos personales</div>
     <div class="form-row"><label>Nombre completo (Apellidos, Nombre)</label><input id="c-nombre" placeholder="Ej. García López, Juan" autocomplete="off"></div>
     <div class="form-grid">
@@ -353,6 +364,13 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <div class="form-row"><label>Empleo anterior</label><input id="c-empleo" placeholder="Ej. Cabo primero" autocomplete="off"></div>
     </div>
     <div class="form-row"><label>Antigüedad en el ejército</label><input id="c-antiguedad" placeholder="Ej. 4 años" autocomplete="off"></div>
+    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;font-weight:500;margin:12px 0 8px">Notas IPA</div>
+    <div class="form-grid">
+      <div class="form-row"><label>IPA 1er curso</label><input id="c-ipa1" type="number" min="0" max="10" step="0.01" placeholder="—" inputmode="decimal"></div>
+      <div class="form-row"><label>IPA 2º curso</label><input id="c-ipa2" type="number" min="0" max="10" step="0.01" placeholder="—" inputmode="decimal"></div>
+      <div class="form-row"><label>IPA 3er curso</label><input id="c-ipa3" type="number" min="0" max="10" step="0.01" placeholder="—" inputmode="decimal"></div>
+      <div class="form-row"><label>IPA curso actual (4º)</label><input id="c-ipa-curso" type="number" min="0" max="10" step="0.01" placeholder="—" inputmode="decimal"></div>
+    </div>
     <div class="form-row"><label>Observaciones</label><textarea id="c-obs" placeholder="Notas adicionales..."></textarea></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-cadete')">Cancelar</button>
@@ -499,6 +517,29 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 </div>
 
 <script>
+let _tempFoto='';
+function handleFotoUpload(input){
+  if(!input.files||!input.files[0])return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const canvas=document.createElement('canvas');
+      const max=200;const scale=Math.min(max/img.width,max/img.height,1);
+      canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+      _tempFoto=canvas.toDataURL('image/jpeg',0.75);
+      showFotoPreview(_tempFoto);
+    };img.src=e.target.result;
+  };reader.readAsDataURL(input.files[0]);
+}
+function showFotoPreview(src){
+  const ph=document.getElementById('c-foto-placeholder');
+  const pv=document.getElementById('c-foto-preview');
+  if(!ph||!pv)return;
+  if(src){ph.classList.add('hidden');pv.classList.remove('hidden');pv.src=src;}
+  else{ph.classList.remove('hidden');pv.classList.add('hidden');pv.src='';}
+}
 const TEMAS_TACTICOS=['Campo de minas','Tapones de minas','Masa de tapones','Apertura de brechas','Obstáculos de alambre','Refuerzo de posición','Cruce de curso de agua','Movimiento por itinerario','Ocupación de posición defensiva','Ataque a posición','Movimiento en orden de combate','Emboscada','Contraemboscada','Apoyo de fuego','Enlace y transmisiones','Apoyo logístico en combate','Otro'];
 const today=new Date();today.setHours(0,0,0,0);
 const COLORS=['#185FA5','#639922','#BA7517','#993556','#533AB7','#0F6E56','#B8500A'];
@@ -663,7 +704,7 @@ function renderCadetes(){
     const tasks=state.tareasCadetes.filter(t=>t.cadetId===c.id&&!t.done);
     return`<div class="card">
       <div style="display:flex;align-items:flex-start;gap:10px">
-        <div style="width:40px;height:40px;border-radius:50%;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:${col};flex-shrink:0">${initials(c.nombre)}</div>
+        ${c.foto?`<img src="${c.foto}" class="cadet-foto" alt="">`:`<div style="width:40px;height:40px;border-radius:50%;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:${col};flex-shrink:0">${initials(c.nombre)}</div>`}
         <div style="flex:1;min-width:0">
           <div style="font-size:14px;font-weight:500">${c.nombre}</div>
           <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">
@@ -679,6 +720,7 @@ function renderCadetes(){
             ${c.tel?`<div style="font-size:11px;color:var(--text-secondary)"><i class="ti ti-phone" style="font-size:11px;vertical-align:-1px"></i> ${c.tel}</div>`:''}
             ${c.email?`<div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><i class="ti ti-mail" style="font-size:11px;vertical-align:-1px"></i> ${c.email}</div>`:''}
           </div>
+          ${(c.ipa1||c.ipa2||c.ipa3||c.ipaCurso)?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center"><span style="font-size:11px;color:var(--text-secondary);font-weight:500">IPA:</span>${['1º','2º','3º','4º'].map((yr,i)=>{const v=[c.ipa1,c.ipa2,c.ipa3,c.ipaCurso][i];return v?`<span class="badge ${parseFloat(v)>=5?'badge-green':'badge-red'}" style="font-size:10px">${yr} ${parseFloat(v).toFixed(2)}</span>`:''}).join('')}</div>`:''}
           ${c.obs?`<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;font-style:italic">${c.obs}</div>`:''}
           ${tasks.length?`<div class="chip-row">${tasks.map(t=>{const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;const cls=diff!==null&&diff<0?'chip-danger':diff!==null&&diff<=3?'chip-warn':'';return`<span class="chip ${cls}" style="font-size:10px">${t.tarea}${t.fechaLimite?` · ${fmtDateEs(t.fechaLimite)}`:''}</span>`;}).join('')}</div>`:''}
         </div>
@@ -843,10 +885,11 @@ function calNext(){state.calMonth++;if(state.calMonth>11){state.calMonth=0;state
 function populateFilterCadete(){const sel=document.getElementById('filtro-cadete-notas');sel.innerHTML=`<option value="">Todos</option>`+state.cadetes.map(c=>`<option value="${c.id}">${c.nombre.split(',')[0]}</option>`).join('');}
 function populateNotaSelect(){document.getElementById('n-cadete').innerHTML=state.cadetes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');}
 function populateSancionSelect(){document.getElementById('s-cadete').innerHTML=state.cadetes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');document.getElementById('s-fecha').value=todayStr();}
-function clearCadeteForm(){['c-nombre','c-dni','c-tel','c-email','c-dir','c-emerg-nombre','c-emerg-tel','c-prom-gral','c-prom-ing','c-empleo','c-antiguedad','c-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const fn=document.getElementById('c-fnac');if(fn)fn.value='';}
+function clearCadeteForm(){['c-nombre','c-dni','c-tel','c-email','c-dir','c-emerg-nombre','c-emerg-tel','c-prom-gral','c-prom-ing','c-empleo','c-antiguedad','c-ipa1','c-ipa2','c-ipa3','c-ipa-curso','c-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const fn=document.getElementById('c-fnac');if(fn)fn.value='';_tempFoto='';showFotoPreview('');}
 
 function getCadetFields(){
   return{
+    foto:_tempFoto,
     nombre:document.getElementById('c-nombre').value.trim(),
     fnac:document.getElementById('c-fnac').value,
     dni:document.getElementById('c-dni').value.trim(),
@@ -862,12 +905,17 @@ function getCadetFields(){
     procMil:document.getElementById('c-proc-mil').value,
     empleo:document.getElementById('c-empleo').value.trim(),
     antiguedad:document.getElementById('c-antiguedad').value.trim(),
+    ipa1:document.getElementById('c-ipa1').value,
+    ipa2:document.getElementById('c-ipa2').value,
+    ipa3:document.getElementById('c-ipa3').value,
+    ipaCurso:document.getElementById('c-ipa-curso').value,
     obs:document.getElementById('c-obs').value.trim(),
   };
 }
 function setCadetFields(c){
-  const map={nombre:'c-nombre',fnac:'c-fnac',dni:'c-dni',tel:'c-tel',email:'c-email',dir:'c-dir',emergNombre:'c-emerg-nombre',emergTel:'c-emerg-tel',promGral:'c-prom-gral',promIng:'c-prom-ing',puesto:'c-puesto',acceso:'c-acceso',procMil:'c-proc-mil',empleo:'c-empleo',antiguedad:'c-antiguedad',obs:'c-obs'};
+  const map={nombre:'c-nombre',fnac:'c-fnac',dni:'c-dni',tel:'c-tel',email:'c-email',dir:'c-dir',emergNombre:'c-emerg-nombre',emergTel:'c-emerg-tel',promGral:'c-prom-gral',promIng:'c-prom-ing',puesto:'c-puesto',acceso:'c-acceso',procMil:'c-proc-mil',empleo:'c-empleo',antiguedad:'c-antiguedad',ipa1:'c-ipa1',ipa2:'c-ipa2',ipa3:'c-ipa3',ipaCurso:'c-ipa-curso',obs:'c-obs'};
   Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el&&c[k]!==undefined)el.value=c[k];});
+  _tempFoto=c.foto||'';showFotoPreview(_tempFoto);
 }
 
 const ACCESO_LABEL={'ADST':'Acceso directo s/ titulación','ADCT':'Acceso directo c/ titulación','PIST':'Prom. interna s/ titulación','PICT':'Prom. interna c/ titulación','CA':'Créditos adquiridos'};
