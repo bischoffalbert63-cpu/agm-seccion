@@ -310,22 +310,49 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
 <!-- MODAL CADETE -->
 <div id="modal-cadete" class="modal-overlay hidden">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-drag"></div>
     <div class="modal-header">
       <span class="modal-title" id="modal-cadete-title">Añadir cadete</span>
       <button class="btn btn-icon" onclick="closeModal('modal-cadete')"><i class="ti ti-x"></i></button>
     </div>
-    <div class="form-row"><label>Nombre completo</label><input id="c-nombre" placeholder="Ej. García López, Juan" autocomplete="off"></div>
+    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;font-weight:500;margin-bottom:8px">Datos personales</div>
+    <div class="form-row"><label>Nombre completo (Apellidos, Nombre)</label><input id="c-nombre" placeholder="Ej. García López, Juan" autocomplete="off"></div>
     <div class="form-grid">
-      <div class="form-row"><label>Número de cadete</label><input id="c-num" placeholder="2024-045" autocomplete="off"></div>
-      <div class="form-row"><label>Puesto</label>
-        <select id="c-puesto"><option>Tirador</option><option>Asistente tirador</option><option>Jefe de escuadra</option><option>Radiotelefonista</option><option>Conductor</option><option>Sanitario</option><option>Jefe de pelotón</option><option>Sin asignar</option></select>
-      </div>
-      <div class="form-row fullrow"><label>Especialidad</label>
-        <select id="c-especialidad"><option>Infantería</option><option>Caballería</option><option>Artillería</option><option>Ingenieros</option><option>Transmisiones</option><option>Logística</option><option>Sanidad</option></select>
-      </div>
+      <div class="form-row"><label>Fecha de nacimiento</label><input id="c-fnac" type="date"></div>
+      <div class="form-row"><label>DNI / NIF</label><input id="c-dni" placeholder="12345678A" autocomplete="off"></div>
+      <div class="form-row"><label>Teléfono</label><input id="c-tel" placeholder="600 000 000" type="tel" autocomplete="off"></div>
+      <div class="form-row"><label>Correo electrónico</label><input id="c-email" placeholder="nombre@email.com" type="email" autocomplete="off"></div>
     </div>
+    <div class="form-row"><label>Dirección</label><input id="c-dir" placeholder="Calle, número, ciudad" autocomplete="off"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Contacto de emergencia</label><input id="c-emerg-nombre" placeholder="Nombre y apellidos" autocomplete="off"></div>
+      <div class="form-row"><label>Teléfono emergencia</label><input id="c-emerg-tel" placeholder="600 000 000" type="tel" autocomplete="off"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;font-weight:500;margin:12px 0 8px">Datos militares</div>
+    <div class="form-grid">
+      <div class="form-row"><label>Nº promoción general</label><input id="c-prom-gral" placeholder="Ej. 193" autocomplete="off"></div>
+      <div class="form-row"><label>Nº promoción ingenieros</label><input id="c-prom-ing" placeholder="Ej. 87" autocomplete="off"></div>
+    </div>
+    <div class="form-row"><label>Puesto en la sección</label>
+      <select id="c-puesto"><option>Tirador</option><option>Asistente tirador</option><option>Jefe de escuadra</option><option>Radiotelefonista</option><option>Conductor</option><option>Sanitario</option><option>Jefe de pelotón</option><option>Sin asignar</option></select>
+    </div>
+    <div class="form-row"><label>Forma de acceso</label>
+      <select id="c-acceso">
+        <option value="ADST">Acceso directo sin titulación</option>
+        <option value="ADCT">Acceso directo con titulación</option>
+        <option value="PIST">Promoción interna sin titulación</option>
+        <option value="PICT">Promoción interna con titulación</option>
+        <option value="CA">Créditos adquiridos</option>
+      </select>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Procedencia militar</label>
+        <select id="c-proc-mil"><option value="no">No</option><option value="si">Sí</option></select>
+      </div>
+      <div class="form-row"><label>Empleo anterior</label><input id="c-empleo" placeholder="Ej. Cabo primero" autocomplete="off"></div>
+    </div>
+    <div class="form-row"><label>Antigüedad en el ejército</label><input id="c-antiguedad" placeholder="Ej. 4 años" autocomplete="off"></div>
     <div class="form-row"><label>Observaciones</label><textarea id="c-obs" placeholder="Notas adicionales..."></textarea></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-cadete')">Cancelar</button>
@@ -486,10 +513,10 @@ document.getElementById('topbar-date').textContent=today.toLocaleDateString('es-
 
 let state={
   cadetes:[
-    {id:1,nombre:'García López, Juan',num:'2024-001',puesto:'Jefe de escuadra',especialidad:'Infantería',obs:'Destaca en orientación'},
-    {id:2,nombre:'Martínez Ruiz, Ana',num:'2024-002',puesto:'Radiotelefonista',especialidad:'Transmisiones',obs:''},
-    {id:3,nombre:'Fernández Vega, Carlos',num:'2024-003',puesto:'Tirador',especialidad:'Infantería',obs:''},
-    {id:4,nombre:'Torres Molina, Laura',num:'2024-004',puesto:'Sanitario',especialidad:'Sanidad',obs:''},
+    {id:1,nombre:'García López, Juan',fnac:'2000-03-15',dni:'12345678A',tel:'600111222',email:'garcia@ejemplo.com',dir:'Calle Mayor 1, Zaragoza',emergNombre:'García Pérez, Luis',emergTel:'600333444',promGral:'193',promIng:'87',puesto:'Jefe de escuadra',acceso:'ADST',procMil:'no',empleo:'',antiguedad:'',obs:'Destaca en orientación'},
+    {id:2,nombre:'Martínez Ruiz, Ana',fnac:'2001-07-22',dni:'23456789B',tel:'600222333',email:'martinez@ejemplo.com',dir:'Av. Constitución 5, Madrid',emergNombre:'Martínez Gil, Carmen',emergTel:'600444555',promGral:'193',promIng:'87',puesto:'Radiotelefonista',acceso:'ADCT',procMil:'no',empleo:'',antiguedad:'',obs:''},
+    {id:3,nombre:'Fernández Vega, Carlos',fnac:'1998-11-08',dni:'34567890C',tel:'600333444',email:'fernandez@ejemplo.com',dir:'Paseo Colón 3, Sevilla',emergNombre:'Fernández Ruiz, María',emergTel:'600555666',promGral:'193',promIng:'87',puesto:'Tirador',acceso:'PIST',procMil:'si',empleo:'Cabo primero',antiguedad:'4 años',obs:''},
+    {id:4,nombre:'Torres Molina, Laura',fnac:'1999-05-30',dni:'45678901D',tel:'600444555',email:'torres@ejemplo.com',dir:'Calle Cervantes 8, Valencia',emergNombre:'Torres Sanz, Pedro',emergTel:'600666777',promGral:'193',promIng:'87',puesto:'Sanitario',acceso:'PICT',procMil:'si',empleo:'Soldado',antiguedad:'2 años',obs:''},
   ],
   sanciones:[],
   tareasCadetes:[
@@ -636,20 +663,29 @@ function renderCadetes(){
     const tasks=state.tareasCadetes.filter(t=>t.cadetId===c.id&&!t.done);
     return`<div class="card">
       <div style="display:flex;align-items:flex-start;gap:10px">
-        <div style="width:38px;height:38px;border-radius:50%;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:${col};flex-shrink:0">${initials(c.nombre)}</div>
+        <div style="width:40px;height:40px;border-radius:50%;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:${col};flex-shrink:0">${initials(c.nombre)}</div>
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            <span style="font-size:14px;font-weight:500">${c.nombre}</span>
-            <span class="badge badge-gray" style="font-size:10px">${c.num}</span>
+          <div style="font-size:14px;font-weight:500">${c.nombre}</div>
+          <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">
+            <span class="badge badge-blue" style="font-size:10px">${c.puesto||'Sin asignar'}</span>
+            ${c.acceso?`<span class="badge badge-purple" style="font-size:10px">${ACCESO_LABEL[c.acceso]||c.acceso}</span>`:''}
+            ${c.procMil==='si'?`<span class="badge badge-amber" style="font-size:10px">Proc. militar</span>`:''}
           </div>
-          <div style="margin-top:4px"><span class="badge badge-blue" style="margin-right:4px;font-size:10px">${c.puesto}</span><span class="badge badge-purple" style="font-size:10px">${c.especialidad}</span></div>
-          ${c.obs?`<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px">${c.obs}</div>`:''}
+          <div style="margin-top:6px;display:grid;grid-template-columns:1fr 1fr;gap:2px 12px">
+            ${c.promGral?`<div style="font-size:11px;color:var(--text-secondary)"><i class="ti ti-hash" style="font-size:11px;vertical-align:-1px"></i> Prom. gral: <strong>${c.promGral}</strong></div>`:''}
+            ${c.promIng?`<div style="font-size:11px;color:var(--text-secondary)"><i class="ti ti-hash" style="font-size:11px;vertical-align:-1px"></i> Prom. ing: <strong>${c.promIng}</strong></div>`:''}
+            ${c.empleo?`<div style="font-size:11px;color:var(--text-secondary)"><i class="ti ti-military-rank" style="font-size:11px;vertical-align:-1px"></i> ${c.empleo}</div>`:''}
+            ${c.antiguedad?`<div style="font-size:11px;color:var(--text-secondary)"><i class="ti ti-calendar" style="font-size:11px;vertical-align:-1px"></i> ${c.antiguedad}</div>`:''}
+            ${c.tel?`<div style="font-size:11px;color:var(--text-secondary)"><i class="ti ti-phone" style="font-size:11px;vertical-align:-1px"></i> ${c.tel}</div>`:''}
+            ${c.email?`<div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><i class="ti ti-mail" style="font-size:11px;vertical-align:-1px"></i> ${c.email}</div>`:''}
+          </div>
+          ${c.obs?`<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;font-style:italic">${c.obs}</div>`:''}
           ${tasks.length?`<div class="chip-row">${tasks.map(t=>{const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;const cls=diff!==null&&diff<0?'chip-danger':diff!==null&&diff<=3?'chip-warn':'';return`<span class="chip ${cls}" style="font-size:10px">${t.tarea}${t.fechaLimite?` · ${fmtDateEs(t.fechaLimite)}`:''}</span>`;}).join('')}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
-          <button class="btn btn-sm btn-icon" onclick="openTareaCadete(${c.id})"><i class="ti ti-clipboard-plus"></i></button>
-          <button class="btn btn-sm btn-icon" onclick="editCadete(${c.id})"><i class="ti ti-edit"></i></button>
-          <button class="btn btn-sm btn-icon btn-danger" onclick="deleteCadete(${c.id})"><i class="ti ti-trash"></i></button>
+          <button class="btn btn-sm btn-icon" onclick="openTareaCadete(${c.id})" title="Asignar tarea"><i class="ti ti-clipboard-plus"></i></button>
+          <button class="btn btn-sm btn-icon" onclick="editCadete(${c.id})" title="Editar"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="deleteCadete(${c.id})" title="Eliminar"><i class="ti ti-trash"></i></button>
         </div>
       </div>
     </div>`;
@@ -807,26 +843,48 @@ function calNext(){state.calMonth++;if(state.calMonth>11){state.calMonth=0;state
 function populateFilterCadete(){const sel=document.getElementById('filtro-cadete-notas');sel.innerHTML=`<option value="">Todos</option>`+state.cadetes.map(c=>`<option value="${c.id}">${c.nombre.split(',')[0]}</option>`).join('');}
 function populateNotaSelect(){document.getElementById('n-cadete').innerHTML=state.cadetes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');}
 function populateSancionSelect(){document.getElementById('s-cadete').innerHTML=state.cadetes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');document.getElementById('s-fecha').value=todayStr();}
-function clearCadeteForm(){['c-nombre','c-num','c-obs'].forEach(id=>document.getElementById(id).value='');}
+function clearCadeteForm(){['c-nombre','c-dni','c-tel','c-email','c-dir','c-emerg-nombre','c-emerg-tel','c-prom-gral','c-prom-ing','c-empleo','c-antiguedad','c-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const fn=document.getElementById('c-fnac');if(fn)fn.value='';}
+
+function getCadetFields(){
+  return{
+    nombre:document.getElementById('c-nombre').value.trim(),
+    fnac:document.getElementById('c-fnac').value,
+    dni:document.getElementById('c-dni').value.trim(),
+    tel:document.getElementById('c-tel').value.trim(),
+    email:document.getElementById('c-email').value.trim(),
+    dir:document.getElementById('c-dir').value.trim(),
+    emergNombre:document.getElementById('c-emerg-nombre').value.trim(),
+    emergTel:document.getElementById('c-emerg-tel').value.trim(),
+    promGral:document.getElementById('c-prom-gral').value.trim(),
+    promIng:document.getElementById('c-prom-ing').value.trim(),
+    puesto:document.getElementById('c-puesto').value,
+    acceso:document.getElementById('c-acceso').value,
+    procMil:document.getElementById('c-proc-mil').value,
+    empleo:document.getElementById('c-empleo').value.trim(),
+    antiguedad:document.getElementById('c-antiguedad').value.trim(),
+    obs:document.getElementById('c-obs').value.trim(),
+  };
+}
+function setCadetFields(c){
+  const map={nombre:'c-nombre',fnac:'c-fnac',dni:'c-dni',tel:'c-tel',email:'c-email',dir:'c-dir',emergNombre:'c-emerg-nombre',emergTel:'c-emerg-tel',promGral:'c-prom-gral',promIng:'c-prom-ing',puesto:'c-puesto',acceso:'c-acceso',procMil:'c-proc-mil',empleo:'c-empleo',antiguedad:'c-antiguedad',obs:'c-obs'};
+  Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el&&c[k]!==undefined)el.value=c[k];});
+}
+
+const ACCESO_LABEL={'ADST':'Acceso directo s/ titulación','ADCT':'Acceso directo c/ titulación','PIST':'Prom. interna s/ titulación','PICT':'Prom. interna c/ titulación','CA':'Créditos adquiridos'};
 
 function saveCadete(){
-  const nombre=document.getElementById('c-nombre').value.trim();if(!nombre)return;
+  const f=getCadetFields();if(!f.nombre)return;
   if(state.editingCadeteId){
-    const c=getCadetById(state.editingCadeteId);
-    c.nombre=nombre;c.num=document.getElementById('c-num').value.trim();
-    c.puesto=document.getElementById('c-puesto').value;c.especialidad=document.getElementById('c-especialidad').value;
-    c.obs=document.getElementById('c-obs').value.trim();state.editingCadeteId=null;
+    const c=getCadetById(state.editingCadeteId);Object.assign(c,f);state.editingCadeteId=null;
   } else {
-    state.cadetes.push({id:state.nextId.cadetes++,nombre,num:document.getElementById('c-num').value.trim(),puesto:document.getElementById('c-puesto').value,especialidad:document.getElementById('c-especialidad').value,obs:document.getElementById('c-obs').value.trim()});
+    state.cadetes.push({id:state.nextId.cadetes++,...f});
   }
   save();closeModal('modal-cadete');populateFilterCadete();render();
 }
 function editCadete(id){
   const c=getCadetById(id);if(!c)return;
   document.getElementById('modal-cadete-title').textContent='Editar cadete';
-  document.getElementById('c-nombre').value=c.nombre;document.getElementById('c-num').value=c.num;
-  document.getElementById('c-puesto').value=c.puesto;document.getElementById('c-especialidad').value=c.especialidad;
-  document.getElementById('c-obs').value=c.obs;state.editingCadeteId=id;
+  setCadetFields(c);state.editingCadeteId=id;
   openModal('modal-cadete');
 }
 function deleteCadete(id){
