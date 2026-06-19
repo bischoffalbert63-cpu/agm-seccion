@@ -822,15 +822,17 @@ function renderEjercicios(){
       <div style="display:flex;align-items:center;gap:6px"><span class="badge badge-green" style="font-size:10px">Media: ${avg.toFixed(1)}</span><span style="font-size:11px;color:var(--text-secondary)">${fmtDateEs(e.fecha)}</span>
         <button class="btn btn-sm btn-icon btn-danger" onclick="deleteEjercicio(${e.id})"><i class="ti ti-trash"></i></button></div>
     </div>
-    ${state.cadetes.map((c,i)=>{const d=e.cadetData[c.id];if(!d)return'';const col=getColor(i);const nota=parseFloat(d.nota);
-      return`<div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:10px;margin-bottom:8px;border:0.5px solid var(--border-t)">
+    ${state.cadetes.map((c,i)=>{const d=e.cadetData[c.id];if(!d)return'';const col=getColor(i);const isEval=d.tipoPuesto==='evaluable';const nota=parseFloat(isEval?d.nota:d.nota);
+      const crits=isEval?CRITERIOS.map(([fid,lbl])=>{const v=d['c'+fid];return v!==undefined&&v!==''?`<span style="font-size:10px;color:var(--text-secondary)">${lbl}: <strong style="color:var(--text-primary)">${parseFloat(v).toFixed(1)}</strong></span>`:null;}).filter(Boolean):[];
+      return`<div style="background:var(--bg-secondary);border-radius:var(--radius-md);padding:10px;margin-bottom:8px;border:0.5px solid var(--border-t);${isEval?'border-left:3px solid #185FA5':''}">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="width:26px;height:26px;border-radius:50%;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:${col};flex-shrink:0">${initials(c.nombre)}</div>
           <span style="font-size:13px;font-weight:500;flex:1">${c.nombre.split(',')[0]}</span>
-          <span style="font-size:16px;font-weight:500;color:${nota>=5?'#3B6D11':'#791F1F'}">${isNaN(nota)?'—':nota.toFixed(1)}</span>
+          ${isEval?`<span class="badge badge-blue" style="font-size:10px">${d.rolEval||'Evaluable'}</span>`:`<span class="badge badge-gray" style="font-size:10px">Zapador</span>`}
+          <span style="font-size:16px;font-weight:500;color:${!isNaN(nota)&&nota>=5?'#3B6D11':'#791F1F'}">${isNaN(nota)?'—':nota.toFixed(1)}</span>
         </div>
-        ${d.temaTactico?`<div style="font-size:11px;margin-bottom:3px"><span style="color:var(--text-secondary)">Tema: </span><span class="badge badge-purple" style="font-size:10px">${d.temaTactico}</span></div>`:''}
-        ${d.puestoTactico?`<div style="font-size:11px;margin-bottom:2px"><span style="color:var(--text-secondary)">Puesto: </span><strong>${d.puestoTactico}</strong></div>`:''}
+        ${d.temaTactico?`<div style="font-size:11px;margin-bottom:4px"><span style="color:var(--text-secondary)">Tema: </span><span class="badge badge-purple" style="font-size:10px">${d.temaTactico}</span></div>`:''}
+        ${crits.length?`<div style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:4px">${crits.join('')}</div>`:''}
         ${d.obs?`<div style="font-size:11px;color:var(--text-tertiary);font-style:italic">"${d.obs}"</div>`:''}
       </div>`;
     }).join('')}</div>`;
@@ -1005,15 +1007,45 @@ function saveNota(){
   save();closeModal('modal-nota');render();
 }
 function deleteNota(id){if(!confirm('¿Eliminar?'))return;state.notas=state.notas.filter(n=>n.id!==id);save();render();}
+const ROLES_EVAL=['Jefe de Ingenieros','Jefe de Sección','Jefe de Pelotón','Jefe de Equipo','Otro'];
+const CRITERIOS=[['TomaDecisiones','Toma de decisiones'],['Mando','Mando'],['Liderazgo','Liderazgo'],['Adaptacion','Adaptación a los cambios']];
+function ejSetTipo(cid,tipo){
+  document.getElementById('ej-tipop-'+cid).value=tipo;
+  const ev=tipo==='evaluable';
+  document.getElementById('ej-sec-zap-'+cid).classList.toggle('hidden',ev);
+  document.getElementById('ej-sec-eval-'+cid).classList.toggle('hidden',!ev);
+  const bz=document.getElementById('ej-btn-zap-'+cid);const be=document.getElementById('ej-btn-eval-'+cid);
+  bz.style.background=ev?'var(--bg-secondary)':'#185FA5';bz.style.color=ev?'var(--text-secondary)':'#fff';
+  be.style.background=ev?'#185FA5':'var(--bg-secondary)';be.style.color=ev?'#fff':'var(--text-secondary)';
+}
 function renderEjCadetes(){
+  const temaOpts=`<option value="">— Sin asignar —</option>`+TEMAS_TACTICOS.map(t=>`<option>${t}</option>`).join('');
   document.getElementById('ej-cadetes-scores').innerHTML=state.cadetes.map(c=>`
     <div class="ej-cadet-block">
-      <div style="font-size:13px;font-weight:500;margin-bottom:10px">${c.nombre}</div>
-      <div class="form-grid">
-        <div class="form-row" style="margin-bottom:0"><label>Nota (0–10)</label><input type="number" min="0" max="10" step="0.5" class="nota-input" id="ej-nota-${c.id}" placeholder="—" inputmode="decimal"></div>
-        <div class="form-row" style="margin-bottom:0"><label>Puesto táctico</label><input type="text" id="ej-puesto-${c.id}" placeholder="Ej. Tirador"></div>
-        <div class="form-row fullrow" style="margin-bottom:0"><label>Tema táctico</label><select id="ej-tema-${c.id}"><option value="">— Sin asignar —</option>${TEMAS_TACTICOS.map(t=>`<option>${t}</option>`).join('')}</select></div>
-        <div class="form-row fullrow" style="margin-bottom:0"><label>Observaciones</label><textarea id="ej-obs-${c.id}" placeholder="Observaciones sobre el desempeño..." style="min-height:60px"></textarea></div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:8px">${c.nombre}</div>
+      <input type="hidden" id="ej-tipop-${c.id}" value="zapador">
+      <div style="display:flex;margin-bottom:10px;border:0.5px solid var(--border-s);border-radius:6px;overflow:hidden">
+        <button id="ej-btn-zap-${c.id}" onclick="ejSetTipo(${c.id},'zapador')" style="flex:1;padding:7px;font-size:12px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-family:var(--font)">Zapador</button>
+        <button id="ej-btn-eval-${c.id}" onclick="ejSetTipo(${c.id},'evaluable')" style="flex:1;padding:7px;font-size:12px;border:none;background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;font-family:var(--font)">Puesto evaluable</button>
+      </div>
+      <div id="ej-sec-zap-${c.id}">
+        <div class="form-grid">
+          <div class="form-row" style="margin-bottom:0"><label>Nota (0–10)</label><input type="number" min="0" max="10" step="0.5" class="nota-input" id="ej-nota-${c.id}" placeholder="—" inputmode="decimal"></div>
+          <div class="form-row fullrow" style="margin-bottom:0"><label>Tema táctico</label><select id="ej-tema-${c.id}">${temaOpts}</select></div>
+          <div class="form-row fullrow" style="margin-bottom:0"><label>Observaciones</label><textarea id="ej-obs-${c.id}" placeholder="Observaciones..." style="min-height:50px"></textarea></div>
+        </div>
+      </div>
+      <div id="ej-sec-eval-${c.id}" class="hidden">
+        <div class="form-grid">
+          <div class="form-row" style="margin-bottom:8px"><label>Rol evaluable</label><select id="ej-eval-rol-${c.id}"><option value="">— Seleccionar —</option>${ROLES_EVAL.map(r=>`<option>${r}</option>`).join('')}</select></div>
+          <div class="form-row fullrow" style="margin-bottom:8px"><label>Tema táctico</label><select id="ej-eval-tema-${c.id}">${temaOpts}</select></div>
+        </div>
+        <div style="font-size:11px;color:var(--text-secondary);font-weight:500;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em">Criterios de evaluación</div>
+        ${CRITERIOS.map(([fid,lbl])=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:12px;flex:1">${lbl}</span><input type="number" min="0" max="10" step="0.5" id="ej-c${fid}-${c.id}" placeholder="—" inputmode="decimal" style="width:65px;padding:6px 8px;border:0.5px solid var(--border-t);border-radius:var(--radius-md);font-size:14px;text-align:center;background:var(--bg-primary)"></div>`).join('')}
+        <div class="form-grid" style="margin-top:6px">
+          <div class="form-row" style="margin-bottom:0"><label>Nota global (0–10)</label><input type="number" min="0" max="10" step="0.5" class="nota-input" id="ej-eval-nota-${c.id}" placeholder="—" inputmode="decimal"></div>
+          <div class="form-row fullrow" style="margin-bottom:0"><label>Observaciones</label><textarea id="ej-eval-obs-${c.id}" placeholder="Toma de decisiones, liderazgo observado..." style="min-height:60px"></textarea></div>
+        </div>
       </div>
     </div>`).join('');
 }
@@ -1021,7 +1053,15 @@ function clearEjForm(){document.getElementById('ej-nombre').value='';document.ge
 function saveEjercicio(){
   const nombre=document.getElementById('ej-nombre').value.trim();if(!nombre)return;
   const cadetData={};
-  state.cadetes.forEach(c=>{const nota=document.getElementById('ej-nota-'+c.id).value;cadetData[c.id]={nota:nota===''?null:parseFloat(nota),puestoTactico:document.getElementById('ej-puesto-'+c.id).value.trim(),temaTactico:document.getElementById('ej-tema-'+c.id).value,obs:document.getElementById('ej-obs-'+c.id).value.trim()};});
+  state.cadetes.forEach(c=>{
+    const tipo=document.getElementById('ej-tipop-'+c.id)?.value||'zapador';
+    if(tipo==='evaluable'){
+      cadetData[c.id]={tipoPuesto:'evaluable',rolEval:document.getElementById('ej-eval-rol-'+c.id)?.value||'',temaTactico:document.getElementById('ej-eval-tema-'+c.id)?.value||'',cTomaDecisiones:document.getElementById('ej-cTomaDecisiones-'+c.id)?.value||'',cMando:document.getElementById('ej-cMando-'+c.id)?.value||'',cLiderazgo:document.getElementById('ej-cLiderazgo-'+c.id)?.value||'',cAdaptacion:document.getElementById('ej-cAdaptacion-'+c.id)?.value||'',nota:document.getElementById('ej-eval-nota-'+c.id)?.value||'',obs:document.getElementById('ej-eval-obs-'+c.id)?.value.trim()||''};
+    } else {
+      const nota=document.getElementById('ej-nota-'+c.id)?.value||'';
+      cadetData[c.id]={tipoPuesto:'zapador',temaTactico:document.getElementById('ej-tema-'+c.id)?.value||'',nota:nota===''?null:parseFloat(nota),obs:document.getElementById('ej-obs-'+c.id)?.value.trim()||''};
+    }
+  });
   if(state.editingEjId){const e=state.ejercicios.find(x=>x.id===state.editingEjId);e.nombre=nombre;e.fecha=document.getElementById('ej-fecha').value;e.tipo=document.getElementById('ej-tipo').value;e.cadetData=cadetData;state.editingEjId=null;}
   else state.ejercicios.push({id:state.nextId.ejercicios++,nombre,fecha:document.getElementById('ej-fecha').value,tipo:document.getElementById('ej-tipo').value,cadetData});
   save();closeModal('modal-ejercicio');render();
