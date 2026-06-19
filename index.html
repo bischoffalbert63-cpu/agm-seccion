@@ -484,6 +484,25 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   </div>
 </div>
 
+<!-- MODAL VALORACIÓN TAREA CADETE -->
+<div id="modal-valoracion" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <span class="modal-title">Valoración de la tarea</span>
+      <button class="btn btn-icon" onclick="closeModal('modal-valoracion')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="val-tarea-id">
+    <div class="form-row"><label>Tarea</label><input id="val-tarea-desc" disabled style="background:var(--bg-secondary)"></div>
+    <div class="form-row"><label>Valoración (0–10)</label><input id="val-nota" type="number" min="0" max="10" step="0.5" placeholder="Opcional" inputmode="decimal"></div>
+    <div class="form-row"><label>Observaciones sobre la ejecución</label><textarea id="val-obs" placeholder="Cómo ha ejecutado la tarea, puntos fuertes y mejoras..." style="min-height:90px"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-valoracion')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveValoracion()"><i class="ti ti-check"></i>Marcar completada</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL MIS TAREAS -->
 <div id="modal-mitarea" class="modal-overlay hidden">
   <div class="modal">
@@ -701,7 +720,8 @@ function renderCadetes(){
   const td=todayStr();
   el.innerHTML=state.cadetes.map((c,i)=>{
     const col=getColor(i);
-    const tasks=state.tareasCadetes.filter(t=>t.cadetId===c.id&&!t.done);
+    const pendingTasks=state.tareasCadetes.filter(t=>t.cadetId===c.id&&!t.done);
+    const doneTasks=state.tareasCadetes.filter(t=>t.cadetId===c.id&&t.done);
     return`<div class="card">
       <div style="display:flex;align-items:flex-start;gap:10px">
         ${c.foto?`<img src="${c.foto}" class="cadet-foto" alt="">`:`<div style="width:40px;height:40px;border-radius:50%;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:${col};flex-shrink:0">${initials(c.nombre)}</div>`}
@@ -722,7 +742,8 @@ function renderCadetes(){
           </div>
           ${(c.ipa1||c.ipa2||c.ipa3||c.ipaCurso)?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px;align-items:center"><span style="font-size:11px;color:var(--text-secondary);font-weight:500">IPA:</span>${['1º','2º','3º','4º'].map((yr,i)=>{const v=[c.ipa1,c.ipa2,c.ipa3,c.ipaCurso][i];return v?`<span class="badge ${parseFloat(v)>=5?'badge-green':'badge-red'}" style="font-size:10px">${yr} ${parseFloat(v).toFixed(2)}</span>`:''}).join('')}</div>`:''}
           ${c.obs?`<div style="font-size:11px;color:var(--text-tertiary);margin-top:4px;font-style:italic">${c.obs}</div>`:''}
-          ${tasks.length?`<div class="chip-row">${tasks.map(t=>{const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;const cls=diff!==null&&diff<0?'chip-danger':diff!==null&&diff<=3?'chip-warn':'';return`<span class="chip ${cls}" style="font-size:10px">${t.tarea}${t.fechaLimite?` · ${fmtDateEs(t.fechaLimite)}`:''}</span>`;}).join('')}</div>`:''}
+          ${pendingTasks.length?`<div style="margin-top:6px">${pendingTasks.map(t=>{const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;const cls=diff!==null&&diff<0?'chip-danger':diff!==null&&diff<=3?'chip-warn':'';return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span class="chip ${cls}" style="font-size:10px;flex:1">${t.tarea}${t.fechaLimite?` · ${fmtDateEs(t.fechaLimite)}`:''}</span><button class="btn btn-sm btn-icon" style="min-height:24px;min-width:24px;padding:3px;color:#185FA5" onclick="openValoracion(${t.id})" title="Completar"><i class="ti ti-check" style="font-size:12px"></i></button></div>`;}).join('')}</div>`:''}
+          ${doneTasks.length?`<div style="margin-top:4px">${doneTasks.map(t=>`<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px;padding:6px 8px;background:#EAF3DE;border-radius:6px"><i class="ti ti-circle-check" style="font-size:13px;color:#3B6D11;flex-shrink:0;margin-top:1px"></i><div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;color:#27500A;text-decoration:line-through">${t.tarea}</div>${t.valoracion!==undefined&&t.valoracion!==''?`<div style="font-size:10px;color:#3B6D11">Valoración: <strong>${parseFloat(t.valoracion).toFixed(1)}</strong></div>`:''} ${t.valoracionObs?`<div style="font-size:10px;color:#3B6D11;font-style:italic">"${t.valoracionObs}"</div>`:''}</div><button class="btn btn-sm btn-icon btn-danger" style="min-height:22px;min-width:22px;padding:2px" onclick="undoneTareaCadet(${t.id})" title="Deshacer"><i class="ti ti-rotate-left" style="font-size:11px"></i></button></div>`).join('')}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
           <button class="btn btn-sm btn-icon" onclick="openTareaCadete(${c.id})" title="Asignar tarea"><i class="ti ti-clipboard-plus"></i></button>
@@ -955,6 +976,27 @@ function saveTareaCadete(){
   const tarea=document.getElementById('tc-tarea').value.trim();if(!tarea)return;
   state.tareasCadetes.push({id:state.nextId.tareasCadetes++,cadetId:parseInt(document.getElementById('tc-cadete-id').value),tarea,fechaAsig:document.getElementById('tc-fecha-asig').value,fechaLimite:document.getElementById('tc-fecha-limite').value,prioridad:document.getElementById('tc-prioridad').value,done:false});
   save();closeModal('modal-tarea-cadete');render();
+}
+function openValoracion(id){
+  const t=state.tareasCadetes.find(x=>x.id===id);if(!t)return;
+  document.getElementById('val-tarea-id').value=id;
+  document.getElementById('val-tarea-desc').value=t.tarea;
+  document.getElementById('val-nota').value='';
+  document.getElementById('val-obs').value='';
+  openModal('modal-valoracion');
+}
+function saveValoracion(){
+  const id=parseInt(document.getElementById('val-tarea-id').value);
+  const t=state.tareasCadetes.find(x=>x.id===id);if(!t)return;
+  t.done=true;
+  t.valoracion=document.getElementById('val-nota').value;
+  t.valoracionObs=document.getElementById('val-obs').value.trim();
+  save();closeModal('modal-valoracion');render();
+}
+function undoneTareaCadet(id){
+  const t=state.tareasCadetes.find(x=>x.id===id);if(!t)return;
+  t.done=false;t.valoracion=undefined;t.valoracionObs=undefined;
+  save();render();
 }
 function saveNota(){
   const nota=parseFloat(document.getElementById('n-nota').value);
