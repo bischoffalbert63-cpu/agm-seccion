@@ -201,6 +201,80 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   .informe-body{padding:16px}
   body>*:not(.informe-overlay){display:none!important}
 }
+
+/* ===== RESPONSIVE: TABLET / ESCRITORIO ===== */
+.sidebar-brand{display:none}
+
+@media(min-width:640px){
+  /* Layout grid: sidebar izquierda + contenido derecha */
+  .app{
+    display:grid;
+    grid-template-columns:210px 1fr;
+    grid-template-rows:auto 1fr;
+    height:100dvh;
+    max-height:100dvh;
+  }
+  .topbar{grid-column:2;grid-row:1;height:var(--topbar-h)}
+  .scroll-content{
+    grid-column:2;grid-row:2;
+    padding-bottom:1.5rem;
+  }
+  /* Sidebar */
+  .bottom-nav{
+    grid-column:1;grid-row:1/3;
+    flex-direction:column;
+    width:auto;height:100%;
+    border-top:none;border-right:0.5px solid var(--border-t);
+    position:static;
+    padding:0 8px 16px;
+    justify-content:flex-start;
+    gap:2px;
+    overflow-y:auto;
+  }
+  .sidebar-brand{
+    display:flex;align-items:center;gap:8px;
+    padding:16px 10px 14px;
+    font-size:14px;font-weight:600;color:#185FA5;
+    border-bottom:0.5px solid var(--border-t);
+    margin-bottom:6px;flex-shrink:0;
+  }
+  .sidebar-brand i{font-size:20px}
+  .bnav-btn{
+    flex-direction:row;justify-content:flex-start;
+    padding:10px 14px;gap:12px;
+    min-height:44px;border-radius:8px;
+    font-size:13px;width:100%;
+  }
+  .bnav-btn i{font-size:19px}
+  .bnav-btn span{font-size:13px;max-width:none;overflow:visible}
+  .bnav-btn.active{background:#E6F1FB;color:#185FA5}
+  /* Contenido más ancho */
+  .content{max-width:960px;padding:1.5rem 2rem}
+  /* FAB */
+  .fab{right:2rem;bottom:2rem}
+  /* Cadetes: 2 columnas */
+  #lista-cadetes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #lista-cadetes .card{margin-bottom:0}
+  /* Botones de cadete en fila en tablet+ */
+  #lista-cadetes .card>div>div:last-child{flex-direction:row;flex-wrap:wrap;gap:4px}
+  /* Dashboard rendimiento: 2 columnas */
+  #dash-rendimiento{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  #dash-rendimiento .perf-row{border-bottom:none;padding:10px;background:var(--bg-secondary);border-radius:var(--radius-md)}
+  /* Modal centrado */
+  .modal-overlay{align-items:center;padding:1rem}
+  .modal{border-radius:var(--radius-lg);padding-bottom:1.25rem}
+}
+
+@media(min-width:1024px){
+  .app{grid-template-columns:230px 1fr}
+  .content{max-width:1200px;padding:2rem 3rem}
+  /* Cadetes: 3 columnas en escritorio */
+  #lista-cadetes{grid-template-columns:1fr 1fr 1fr}
+  /* Notas y ejercicios: más espacio visual */
+  #tabla-notas .card,#lista-ejercicios .card{padding:1.25rem}
+  /* Dashboard: 2 columnas de cards */
+  #tab-dashboard .card{break-inside:avoid}
+}
 </style>
 </head>
 <body>
@@ -367,8 +441,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     </div><!-- /content -->
   </div><!-- /scroll-content -->
 
-  <!-- BOTTOM NAV -->
+  <!-- BOTTOM NAV / SIDEBAR -->
   <div class="bottom-nav">
+    <div class="sidebar-brand"><i class="ti ti-shield-star"></i> AGM — Sección</div>
     <button class="bnav-btn active" onclick="showTab('dashboard')" id="nav-dashboard">
       <i class="ti ti-layout-dashboard"></i><span>Cap. Secc.</span>
     </button>
