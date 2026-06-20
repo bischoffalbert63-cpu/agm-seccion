@@ -286,10 +286,14 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
       <!-- MIS TAREAS -->
       <div id="tab-mstareas" class="tab-content">
-        <div class="section-header"><span class="section-title">Mis tareas — Jefe de sección</span></div>
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="showMstSubTab('tareas')" id="sub-mst-tareas"><i class="ti ti-checklist" style="font-size:13px"></i> Tareas</button>
+          <button class="sub-tab" onclick="showMstSubTab('agenda')" id="sub-mst-agenda"><i class="ti ti-notebook" style="font-size:13px"></i> Agenda / Diario</button>
+        </div>
         <div id="mst-alerts"></div>
+        <div id="subtab-mst-tareas">
         <!-- Calendario -->
-        <div class="card" style="padding:1rem">
+        <div class="card" style="padding:1rem" id="mst-cal-card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <span style="font-size:14px;font-weight:500" id="cal-month-label"></span>
             <div style="display:flex;gap:4px">
@@ -313,7 +317,33 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           <div class="section-sep">Completadas</div>
           <div id="mis-tareas-completadas"></div>
         </div>
-      </div>
+        </div><!-- /subtab-mst-tareas -->
+
+        <div id="subtab-mst-agenda" class="hidden">
+          <div class="card" style="padding:1rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <button class="btn btn-sm btn-icon" onclick="agendaPrev()"><i class="ti ti-chevron-left"></i></button>
+              <div style="text-align:center">
+                <div style="font-size:16px;font-weight:600" id="agenda-day-label"></div>
+                <div style="font-size:11px;color:var(--text-secondary)" id="agenda-day-sub"></div>
+              </div>
+              <button class="btn btn-sm btn-icon" onclick="agendaNext()"><i class="ti ti-chevron-right"></i></button>
+            </div>
+            <div class="form-row" style="margin-bottom:8px">
+              <textarea id="agenda-texto" placeholder="Escribe aquí las anotaciones del día: reuniones, decisiones, recordatorios, órdenes recibidas..." style="min-height:200px;font-size:14px;line-height:1.6" oninput="agendaAutoSave()"></textarea>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-size:11px;color:var(--text-tertiary)" id="agenda-saved-lbl"></span>
+              <button class="btn btn-sm btn-primary" onclick="agendaSave()"><i class="ti ti-check"></i> Guardar</button>
+            </div>
+          </div>
+          <div style="margin-top:4px">
+            <div class="section-sep" style="margin:10px 0 8px">Entradas anteriores</div>
+            <div id="agenda-historial"></div>
+          </div>
+        </div><!-- /subtab-mst-agenda -->
+
+      </div><!-- /tab-mstareas -->
 
     </div><!-- /content -->
   </div><!-- /scroll-content -->
@@ -674,10 +704,12 @@ let state={
   editingCadeteId:null,editingEjId:null,editingOrgId:null,
   calYear:today.getFullYear(),calMonth:today.getMonth(),
   selectedCalDay:null,
+  agendaDia:todayStr(),
+  agenda:[],
   activeTab:'dashboard',
-  activeSubTab:{cadetes:'ficha'},
+  activeSubTab:{cadetes:'ficha',mstareas:'tareas'},
 };
-(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];}}catch(e){}}());
+(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';}}catch(e){}}());
 function save(){try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}}
 
 function showTab(t){
@@ -703,7 +735,10 @@ function fabAction(){
     else{openModal('modal-cadete');document.getElementById('modal-cadete-title').textContent='Añadir cadete';state.editingCadeteId=null;clearCadeteForm();}
   } else if(t==='notas'){openModal('modal-nota');populateNotaSelect();}
   else if(t==='ejercicios'){openModal('modal-ejercicio');document.getElementById('modal-ej-title').textContent='Nuevo ejercicio';state.editingEjId=null;clearEjForm();renderEjCadetes();}
-  else if(t==='mstareas'){openModal('modal-mitarea');document.getElementById('mt-fcreacion').value=todayStr();}
+  else if(t==='mstareas'){
+    if(state.activeSubTab.mstareas==='agenda'){state.agendaDia=todayStr();renderAgenda();showMstSubTab('agenda');}
+    else{openModal('modal-mitarea');document.getElementById('mt-fcreacion').value=todayStr();}
+  }
 }
 function showSubTab(tab,sub){
   state.activeSubTab[tab]=sub;
@@ -1144,6 +1179,78 @@ function saveMiTarea(){
 }
 function toggleMiTarea(id){const t=state.misTareas.find(x=>x.id===id);if(t)t.done=!t.done;save();render();}
 function deleteMiTarea(id){if(!confirm('¿Eliminar?'))return;state.misTareas=state.misTareas.filter(t=>t.id!==id);save();render();}
+
+// ---- AGENDA / DIARIO ----
+function showMstSubTab(sub){
+  state.activeSubTab.mstareas=sub;
+  ['tareas','agenda'].forEach(s=>{
+    const el=document.getElementById('subtab-mst-'+s);
+    const btn=document.getElementById('sub-mst-'+s);
+    if(el)s===sub?el.classList.remove('hidden'):el.classList.add('hidden');
+    if(btn)s===sub?btn.classList.add('active'):btn.classList.remove('active');
+  });
+  if(sub==='agenda')renderAgenda();
+}
+function agendaPrev(){
+  const d=new Date(state.agendaDia+'T12:00:00');d.setDate(d.getDate()-1);
+  state.agendaDia=fmtDate(d);renderAgenda();
+}
+function agendaNext(){
+  const d=new Date(state.agendaDia+'T12:00:00');d.setDate(d.getDate()+1);
+  state.agendaDia=fmtDate(d);renderAgenda();
+}
+let _agendaSaveTimer=null;
+function agendaAutoSave(){
+  document.getElementById('agenda-saved-lbl').textContent='Sin guardar...';
+  clearTimeout(_agendaSaveTimer);
+  _agendaSaveTimer=setTimeout(()=>agendaSave(true),1500);
+}
+function agendaSave(auto){
+  const texto=document.getElementById('agenda-texto')?.value||'';
+  const dia=state.agendaDia;
+  const idx=state.agenda.findIndex(a=>a.fecha===dia);
+  if(texto.trim()){
+    if(idx>=0)state.agenda[idx].texto=texto;
+    else state.agenda.push({fecha:dia,texto});
+  } else {
+    if(idx>=0)state.agenda.splice(idx,1);
+  }
+  state.agenda.sort((a,b)=>b.fecha>a.fecha?1:-1);
+  save();
+  const lbl=document.getElementById('agenda-saved-lbl');
+  if(lbl)lbl.textContent=auto?'Guardado automáticamente':'Guardado ✓';
+  renderAgendaHistorial();
+}
+function renderAgenda(){
+  const dia=state.agendaDia;
+  const dt=new Date(dia+'T12:00:00');
+  const dias=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const lbl=document.getElementById('agenda-day-label');
+  const sub=document.getElementById('agenda-day-sub');
+  const txt=document.getElementById('agenda-texto');
+  if(lbl)lbl.textContent=`${dias[dt.getDay()]} ${dt.getDate()} de ${meses[dt.getMonth()]}`;
+  if(sub)sub.textContent=dt.getFullYear()+(dia===todayStr()?' — Hoy':'');
+  const entry=state.agenda.find(a=>a.fecha===dia);
+  if(txt)txt.value=entry?entry.texto:'';
+  const savedLbl=document.getElementById('agenda-saved-lbl');
+  if(savedLbl)savedLbl.textContent='';
+  renderAgendaHistorial();
+}
+function renderAgendaHistorial(){
+  const el=document.getElementById('agenda-historial');if(!el)return;
+  const otras=state.agenda.filter(a=>a.fecha!==state.agendaDia).slice(0,10);
+  if(!otras.length){el.innerHTML=`<div class="empty" style="padding:1rem"><i class="ti ti-notebook"></i>No hay entradas anteriores</div>`;return;}
+  el.innerHTML=otras.map(a=>`<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="agendaGoTo('${a.fecha}')">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:13px;font-weight:500">${fmtDateEs(a.fecha)}</span>
+      <button class="btn btn-sm btn-icon btn-danger" onclick="event.stopPropagation();deleteAgenda('${a.fecha}')"><i class="ti ti-trash"></i></button>
+    </div>
+    <div style="font-size:12px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.5;max-height:60px;overflow:hidden">${a.texto}</div>
+  </div>`).join('');
+}
+function agendaGoTo(fecha){state.agendaDia=fecha;renderAgenda();}
+function deleteAgenda(fecha){if(!confirm('¿Eliminar esta entrada?'))return;state.agenda=state.agenda.filter(a=>a.fecha!==fecha);save();renderAgendaHistorial();}
 
 // ---- INFORME ANUAL ----
 function openInforme(cadetId){
