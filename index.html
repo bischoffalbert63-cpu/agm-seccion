@@ -142,7 +142,8 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 .cal-day:active{opacity:0.7}
 .cal-day.today{background:#E6F1FB;color:#185FA5;font-weight:500}
 .cal-day.other-month{color:var(--text-tertiary)}
-.cal-day.has-task::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#185FA5}
+.cal-day.has-task::after{content:'';position:absolute;bottom:4px;left:46%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#185FA5}
+.cal-day.has-plan::before{content:'';position:absolute;bottom:4px;left:56%;width:5px;height:5px;border-radius:50%;background:#2E8B4A}
 .cal-day.selected{background:#185FA5;color:#fff}
 .cal-day.selected::after{background:#fff}
 .cal-day.overdue{background:#FCEBEB}
@@ -389,9 +390,17 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
             <div class="cal-dname">J</div><div class="cal-dname">V</div><div class="cal-dname">S</div><div class="cal-dname">D</div>
           </div>
           <div class="cal-grid" id="cal-grid"></div>
+          <div style="display:flex;gap:12px;margin-top:8px;justify-content:flex-end">
+            <span style="font-size:10px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#185FA5;display:inline-block"></span>Tarea</span>
+            <span style="font-size:10px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#2E8B4A;display:inline-block"></span>Actividad I/A</span>
+          </div>
         </div>
         <div class="card" id="cal-day-card">
-          <div style="font-size:13px;font-weight:500;margin-bottom:8px" id="cal-selected-label">Selecciona un día</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:13px;font-weight:500" id="cal-selected-label">Selecciona un día</div>
+            <button class="btn btn-sm btn-primary" id="cal-add-plan-btn" style="display:none" onclick="openPlanActividadModal()"><i class="ti ti-plus"></i> Actividad I/A</button>
+          </div>
+          <div id="cal-day-plan"></div>
           <div id="cal-day-tasks"></div>
         </div>
         <div class="card">
@@ -472,6 +481,41 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
           <div id="lista-docs"></div>
         </div><!-- /subtab-mst-docs -->
+
+        <!-- Modal actividad planning I/A -->
+        <div id="modal-plan-act" class="modal hidden">
+          <div class="modal-box" style="max-width:380px">
+            <div class="modal-title" id="plan-act-modal-title">Actividad I/A</div>
+            <div class="form-row">
+              <label>Fecha</label>
+              <input type="date" id="plan-act-fecha">
+            </div>
+            <div class="form-row">
+              <label>Título de la actividad</label>
+              <input id="plan-act-titulo" placeholder="Ej. Instrucción tiro 9mm" autocomplete="off">
+            </div>
+            <div class="form-row">
+              <label>Tipo</label>
+              <select id="plan-act-tipo">
+                <option value="instruccion">Instrucción</option>
+                <option value="ejercicio">Ejercicio táctico</option>
+                <option value="formacion">Formación</option>
+                <option value="revista">Revista / Inspección</option>
+                <option value="maniobra">Maniobra</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Observaciones</label>
+              <textarea id="plan-act-obs" placeholder="Detalles, recursos necesarios, personal implicado..." style="min-height:80px"></textarea>
+            </div>
+            <div class="modal-actions">
+              <button class="btn" onclick="closePlanActModal()">Cancelar</button>
+              <button class="btn btn-danger" id="plan-act-del-btn" style="display:none" onclick="deletePlanActividad()">Eliminar</button>
+              <button class="btn btn-primary" onclick="savePlanActividad()">Guardar</button>
+            </div>
+          </div>
+        </div>
 
         <!-- Modal categoría documento -->
         <div id="modal-doc-cat" class="modal hidden">
@@ -888,7 +932,7 @@ let state={
   activeTab:'dashboard',
   activeSubTab:{cadetes:'ficha',mstareas:'tareas'},
 };
-(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;}}catch(e){}}());
+(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;if(!state.planActividades)state.planActividades=[];if(!state.nextId.planActividades)state.nextId.planActividades=1;}}catch(e){}}());
 function save(){try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}}
 
 function showTab(t){
@@ -1255,6 +1299,9 @@ function taskItemMT(t){
     <button class="btn btn-sm btn-icon btn-danger" onclick="deleteMiTarea(${t.id})"><i class="ti ti-trash"></i></button>
   </div>`;
 }
+const PLAN_TIPO_LABEL={instruccion:'Instrucción',ejercicio:'Ejercicio táctico',formacion:'Formación',revista:'Revista / Inspección',maniobra:'Maniobra',otro:'Otro'};
+const PLAN_TIPO_COLOR={instruccion:'#185FA5',ejercicio:'#C47A1E',formacion:'#2E8B4A',revista:'#8B3A8B',maniobra:'#C0392B',otro:'#5f5e5a'};
+
 function renderCal(){
   const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('cal-month-label').textContent=`${months[state.calMonth]} ${state.calYear}`;
@@ -1270,6 +1317,7 @@ function renderCal(){
     if(diff<0)taskDates[t.fechaLimite]='overdue';
     else if(diff<=parseInt(t.aviso||3)&&taskDates[t.fechaLimite]!=='overdue')taskDates[t.fechaLimite]='warn';
   });
+  const planDates=new Set(state.planActividades.map(a=>a.fecha));
   let html='';
   for(let i=1;i<dow;i++)html+=`<div class="cal-day other-month">${prevDays-dow+i+1}</div>`;
   for(let d=1;d<=days;d++){
@@ -1280,6 +1328,7 @@ function renderCal(){
     if(ts)cls+=' has-task';
     if(ts==='overdue')cls+=' overdue';
     else if(ts==='warn')cls+=' warn-day';
+    if(planDates.has(dstr))cls+=' has-plan';
     if(state.selectedCalDay===dstr)cls+=' selected';
     html+=`<div class="${cls}" onclick="selectCalDay('${dstr}')">${d}</div>`;
   }
@@ -1287,11 +1336,62 @@ function renderCal(){
   if(state.selectedCalDay){
     const dt=new Date(state.selectedCalDay+'T12:00:00');
     document.getElementById('cal-selected-label').textContent=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('cal-add-plan-btn').style.display='';
+    const dayPlan=state.planActividades.filter(a=>a.fecha===state.selectedCalDay);
+    document.getElementById('cal-day-plan').innerHTML=dayPlan.length?dayPlan.map(a=>{
+      const col=PLAN_TIPO_COLOR[a.tipo]||'#5f5e5a';
+      return`<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;padding:8px 10px;background:${col}12;border-left:3px solid ${col};border-radius:0 6px 6px 0;cursor:pointer" onclick="openPlanActividadModal(${a.id})">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:${col}">${PLAN_TIPO_LABEL[a.tipo]||a.tipo}</div>
+          <div style="font-size:13px;font-weight:500;margin-top:1px">${a.titulo}</div>
+          ${a.obs?`<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;white-space:pre-wrap">${a.obs}</div>`:''}
+        </div>
+        <i class="ti ti-edit" style="font-size:14px;color:${col};flex-shrink:0;margin-top:2px"></i>
+      </div>`;
+    }).join(''):'';
     const dayTasks=state.misTareas.filter(t=>t.fechaLimite===state.selectedCalDay||t.fechaPrevista===state.selectedCalDay);
-    document.getElementById('cal-day-tasks').innerHTML=dayTasks.length?dayTasks.map(taskItemMT).join(''):`<div style="font-size:12px;color:var(--text-tertiary)">Sin tareas</div>`;
+    document.getElementById('cal-day-tasks').innerHTML=dayTasks.length?dayTasks.map(taskItemMT).join(''):`<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0">${dayPlan.length?'Sin tareas propias':'Sin tareas ni actividades'}</div>`;
   } else {
+    document.getElementById('cal-add-plan-btn').style.display='none';
+    document.getElementById('cal-day-plan').innerHTML='';
     document.getElementById('cal-day-tasks').innerHTML=`<div style="font-size:12px;color:var(--text-tertiary)">Selecciona un día</div>`;
   }
+}
+
+let _editingPlanId=null;
+function openPlanActividadModal(id){
+  _editingPlanId=id||null;
+  const a=id?state.planActividades.find(x=>x.id===id):null;
+  document.getElementById('plan-act-modal-title').textContent=a?'Editar actividad I/A':'Nueva actividad I/A';
+  document.getElementById('plan-act-fecha').value=a?a.fecha:(state.selectedCalDay||todayStr());
+  document.getElementById('plan-act-titulo').value=a?a.titulo:'';
+  document.getElementById('plan-act-tipo').value=a?a.tipo:'instruccion';
+  document.getElementById('plan-act-obs').value=a?a.obs:'';
+  document.getElementById('plan-act-del-btn').style.display=a?'':'none';
+  document.getElementById('modal-plan-act').classList.remove('hidden');
+}
+function closePlanActModal(){document.getElementById('modal-plan-act').classList.add('hidden');_editingPlanId=null;}
+function savePlanActividad(){
+  const fecha=document.getElementById('plan-act-fecha').value;
+  const titulo=document.getElementById('plan-act-titulo').value.trim();
+  if(!fecha||!titulo){alert('Fecha y título son obligatorios');return;}
+  const tipo=document.getElementById('plan-act-tipo').value;
+  const obs=document.getElementById('plan-act-obs').value.trim();
+  if(_editingPlanId){
+    const a=state.planActividades.find(x=>x.id===_editingPlanId);
+    if(a){a.fecha=fecha;a.titulo=titulo;a.tipo=tipo;a.obs=obs;}
+  } else {
+    state.planActividades.push({id:state.nextId.planActividades++,fecha,titulo,tipo,obs});
+  }
+  save();closePlanActModal();
+  state.selectedCalDay=fecha;
+  state.calYear=parseInt(fecha.slice(0,4));state.calMonth=parseInt(fecha.slice(5,7))-1;
+  renderCal();
+}
+function deletePlanActividad(){
+  if(!_editingPlanId||!confirm('¿Eliminar esta actividad?'))return;
+  state.planActividades=state.planActividades.filter(a=>a.id!==_editingPlanId);
+  save();closePlanActModal();renderCal();
 }
 function selectCalDay(d){state.selectedCalDay=d;renderCal();}
 function calPrev(){state.calMonth--;if(state.calMonth<0){state.calMonth=11;state.calYear--;}renderCal();}
