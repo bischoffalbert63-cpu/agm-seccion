@@ -198,8 +198,12 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 .inf-table td{padding:6px 8px;border-bottom:0.5px solid #e8e6df}
 @media print{
   .informe-toolbar{display:none!important}
-  .informe-body{padding:16px}
+  .informe-body{padding:16px;max-width:100%}
   body>*:not(.informe-overlay){display:none!important}
+  .informe-overlay{position:static!important;overflow:visible!important}
+  .inf-section{page-break-inside:avoid}
+  .inf-cadete-page{page-break-after:always}
+  .inf-cadete-page:last-child{page-break-after:auto}
 }
 
 /* ===== RESPONSIVE: TABLET / ESCRITORIO ===== */
@@ -301,7 +305,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
       <!-- CAPITÁN JEFE DE SECCIÓN (dashboard) -->
       <div id="tab-dashboard" class="tab-content active">
-        <div class="section-header"><span class="section-title">Capitán jefe de sección</span></div>
+        <div class="section-header"><span class="section-title">Capitán jefe de sección</span><button class="btn btn-sm" style="background:#185FA5;color:#fff;border:none" onclick="printAllInformes()"><i class="ti ti-file-type-pdf"></i> PDF Sección</button></div>
         <div id="dash-alerts"></div>
         <div class="grid4" id="dash-metrics" style="margin-bottom:10px"></div>
         <div class="card">
@@ -742,7 +746,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   <div class="informe-toolbar">
     <button class="btn btn-icon" style="color:#fff;border-color:rgba(255,255,255,0.3)" onclick="closeInforme()"><i class="ti ti-arrow-left"></i></button>
     <span style="font-size:14px;font-weight:500;flex:1">Informe anual del cadete</span>
-    <button class="btn btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4)" onclick="window.print()"><i class="ti ti-printer"></i> Imprimir</button>
+    <button class="btn btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4)" onclick="printInforme()"><i class="ti ti-file-type-pdf"></i> PDF</button>
   </div>
   <div class="informe-body" id="informe-body"></div>
 </div>
@@ -1443,11 +1447,19 @@ function deleteAgenda(fecha){if(!confirm('¿Eliminar esta entrada?'))return;stat
 
 // ---- INFORME ANUAL ----
 function openInforme(cadetId){
-  document.getElementById('informe-body').innerHTML=renderInforme(cadetId);
+  document.getElementById('informe-body').innerHTML='<div class="inf-cadete-page">'+renderInforme(cadetId)+'</div>';
   document.getElementById('informe-overlay').classList.remove('hidden');
   document.getElementById('informe-overlay').scrollTop=0;
 }
 function closeInforme(){document.getElementById('informe-overlay').classList.add('hidden');}
+function printInforme(){window.print();}
+function printAllInformes(){
+  const body=document.getElementById('informe-body');
+  body.innerHTML=state.cadetes.map(c=>'<div class="inf-cadete-page">'+renderInforme(c.id)+'</div>').join('');
+  document.getElementById('informe-overlay').classList.remove('hidden');
+  document.getElementById('informe-overlay').scrollTop=0;
+  setTimeout(()=>{window.print();},300);
+}
 function renderInforme(cadetId){
   const c=getCadetById(cadetId);if(!c)return'';
   const col=getColor(state.cadetes.findIndex(x=>x.id===cadetId));
