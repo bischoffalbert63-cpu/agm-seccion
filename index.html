@@ -320,26 +320,45 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         </div><!-- /subtab-mst-tareas -->
 
         <div id="subtab-mst-agenda" class="hidden">
-          <div class="card" style="padding:1rem">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-              <button class="btn btn-sm btn-icon" onclick="agendaPrev()"><i class="ti ti-chevron-left"></i></button>
-              <div style="text-align:center">
-                <div style="font-size:16px;font-weight:600" id="agenda-day-label"></div>
-                <div style="font-size:11px;color:var(--text-secondary)" id="agenda-day-sub"></div>
+          <!-- Vista toggle -->
+          <div style="display:flex;margin-bottom:10px;border:0.5px solid var(--border-s);border-radius:6px;overflow:hidden">
+            <button id="agenda-btn-dia" onclick="agendaSetVista('dia')" style="flex:1;padding:8px;font-size:12px;border:none;background:#185FA5;color:#fff;cursor:pointer;font-family:var(--font)"><i class="ti ti-calendar-day" style="font-size:13px;vertical-align:-1px"></i> Día</button>
+            <button id="agenda-btn-semana" onclick="agendaSetVista('semana')" style="flex:1;padding:8px;font-size:12px;border:none;background:var(--bg-secondary);color:var(--text-secondary);cursor:pointer;font-family:var(--font)"><i class="ti ti-calendar-week" style="font-size:13px;vertical-align:-1px"></i> Semana</button>
+          </div>
+
+          <!-- Vista día -->
+          <div id="agenda-vista-dia">
+            <div class="card" style="padding:1rem">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                <button class="btn btn-sm btn-icon" onclick="agendaPrev()"><i class="ti ti-chevron-left"></i></button>
+                <div style="text-align:center">
+                  <div style="font-size:16px;font-weight:600" id="agenda-day-label"></div>
+                  <div style="font-size:11px;color:var(--text-secondary)" id="agenda-day-sub"></div>
+                </div>
+                <button class="btn btn-sm btn-icon" onclick="agendaNext()"><i class="ti ti-chevron-right"></i></button>
               </div>
-              <button class="btn btn-sm btn-icon" onclick="agendaNext()"><i class="ti ti-chevron-right"></i></button>
+              <div class="form-row" style="margin-bottom:8px">
+                <textarea id="agenda-texto" placeholder="Anotaciones del día: reuniones, decisiones, recordatorios, órdenes recibidas..." style="min-height:200px;font-size:14px;line-height:1.6" oninput="agendaAutoSave()"></textarea>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:11px;color:var(--text-tertiary)" id="agenda-saved-lbl"></span>
+                <button class="btn btn-sm btn-primary" onclick="agendaSave()"><i class="ti ti-check"></i> Guardar</button>
+              </div>
             </div>
-            <div class="form-row" style="margin-bottom:8px">
-              <textarea id="agenda-texto" placeholder="Escribe aquí las anotaciones del día: reuniones, decisiones, recordatorios, órdenes recibidas..." style="min-height:200px;font-size:14px;line-height:1.6" oninput="agendaAutoSave()"></textarea>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <span style="font-size:11px;color:var(--text-tertiary)" id="agenda-saved-lbl"></span>
-              <button class="btn btn-sm btn-primary" onclick="agendaSave()"><i class="ti ti-check"></i> Guardar</button>
+            <div style="margin-top:4px">
+              <div class="section-sep" style="margin:10px 0 8px">Entradas anteriores</div>
+              <div id="agenda-historial"></div>
             </div>
           </div>
-          <div style="margin-top:4px">
-            <div class="section-sep" style="margin:10px 0 8px">Entradas anteriores</div>
-            <div id="agenda-historial"></div>
+
+          <!-- Vista semana -->
+          <div id="agenda-vista-semana" class="hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <button class="btn btn-sm btn-icon" onclick="agendaSemanaPrev()"><i class="ti ti-chevron-left"></i></button>
+              <span style="font-size:13px;font-weight:500" id="agenda-semana-label"></span>
+              <button class="btn btn-sm btn-icon" onclick="agendaSemanaNext()"><i class="ti ti-chevron-right"></i></button>
+            </div>
+            <div id="agenda-semana-dias"></div>
           </div>
         </div><!-- /subtab-mst-agenda -->
 
@@ -705,11 +724,12 @@ let state={
   calYear:today.getFullYear(),calMonth:today.getMonth(),
   selectedCalDay:null,
   agendaDia:todayStr(),
+  agendaVista:'dia',
   agenda:[],
   activeTab:'dashboard',
   activeSubTab:{cadetes:'ficha',mstareas:'tareas'},
 };
-(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';}}catch(e){}}());
+(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';}}catch(e){}}());
 function save(){try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}}
 
 function showTab(t){
@@ -1249,7 +1269,79 @@ function renderAgendaHistorial(){
     <div style="font-size:12px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.5;max-height:60px;overflow:hidden">${a.texto}</div>
   </div>`).join('');
 }
-function agendaGoTo(fecha){state.agendaDia=fecha;renderAgenda();}
+function agendaGoTo(fecha){state.agendaDia=fecha;agendaSetVista('dia');}
+function agendaSetVista(v){
+  state.agendaVista=v;
+  const esDia=v==='dia';
+  document.getElementById('agenda-vista-dia').classList.toggle('hidden',!esDia);
+  document.getElementById('agenda-vista-semana').classList.toggle('hidden',esDia);
+  const bd=document.getElementById('agenda-btn-dia');const bs=document.getElementById('agenda-btn-semana');
+  bd.style.background=esDia?'#185FA5':'var(--bg-secondary)';bd.style.color=esDia?'#fff':'var(--text-secondary)';
+  bs.style.background=esDia?'var(--bg-secondary)':'#185FA5';bs.style.color=esDia?'var(--text-secondary)':'#fff';
+  if(esDia)renderAgenda();else renderAgendaSemana();
+}
+function agendaLunes(fechaRef){
+  const d=new Date(fechaRef+'T12:00:00');
+  const dow=d.getDay();const diff=dow===0?-6:1-dow;
+  d.setDate(d.getDate()+diff);return fmtDate(d);
+}
+function agendaSemanaPrev(){
+  const lunes=agendaLunes(state.agendaDia);
+  const d=new Date(lunes+'T12:00:00');d.setDate(d.getDate()-7);
+  state.agendaDia=fmtDate(d);renderAgendaSemana();
+}
+function agendaSemanaNext(){
+  const lunes=agendaLunes(state.agendaDia);
+  const d=new Date(lunes+'T12:00:00');d.setDate(d.getDate()+7);
+  state.agendaDia=fmtDate(d);renderAgendaSemana();
+}
+function renderAgendaSemana(){
+  const lunes=agendaLunes(state.agendaDia);
+  const lunesDt=new Date(lunes+'T12:00:00');
+  const domingo=new Date(lunes+'T12:00:00');domingo.setDate(domingo.getDate()+6);
+  const meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  document.getElementById('agenda-semana-label').textContent=
+    `${lunesDt.getDate()} ${meses[lunesDt.getMonth()]} — ${domingo.getDate()} ${meses[domingo.getMonth()]} ${domingo.getFullYear()}`;
+  const dias=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const td=todayStr();
+  let html='';
+  for(let i=0;i<7;i++){
+    const d=new Date(lunes+'T12:00:00');d.setDate(d.getDate()+i);
+    const fecha=fmtDate(d);
+    const entry=state.agenda.find(a=>a.fecha===fecha);
+    const esHoy=fecha===td;
+    html+=`<div class="card" style="margin-bottom:8px;${esHoy?'border-color:#185FA5;':''}" >
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:36px;height:36px;border-radius:50%;background:${esHoy?'#185FA5':'var(--bg-secondary)'};color:${esHoy?'#fff':'var(--text-secondary)'};display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:9px;font-weight:500">${dias[i]}</span>
+          <span style="font-size:14px;font-weight:600;line-height:1">${d.getDate()}</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          ${entry?`<div style="font-size:12px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.4;max-height:48px;overflow:hidden">${entry.texto}</div>`:
+          `<div style="font-size:12px;color:var(--text-tertiary);font-style:italic">Sin anotaciones</div>`}
+        </div>
+        <button class="btn btn-sm btn-icon" onclick="agendaGoTo('${fecha}')" title="Editar este día"><i class="ti ti-edit" style="font-size:13px"></i></button>
+      </div>
+      <textarea id="agenda-semana-txt-${fecha}" placeholder="Anotaciones..." style="width:100%;padding:8px 10px;border:0.5px solid var(--border-t);border-radius:var(--radius-md);font-size:13px;line-height:1.5;min-height:70px;resize:vertical;font-family:var(--font);background:var(--bg-primary);color:var(--text-primary)" oninput="agendaSemanaAutoSave('${fecha}',this.value)">${entry?entry.texto:''}</textarea>
+    </div>`;
+  }
+  document.getElementById('agenda-semana-dias').innerHTML=html;
+}
+let _semanaTimers={};
+function agendaSemanaAutoSave(fecha,texto){
+  clearTimeout(_semanaTimers[fecha]);
+  _semanaTimers[fecha]=setTimeout(()=>{
+    const idx=state.agenda.findIndex(a=>a.fecha===fecha);
+    if(texto.trim()){
+      if(idx>=0)state.agenda[idx].texto=texto;
+      else state.agenda.push({fecha,texto});
+    } else {
+      if(idx>=0)state.agenda.splice(idx,1);
+    }
+    state.agenda.sort((a,b)=>b.fecha>a.fecha?1:-1);
+    save();
+  },1200);
+}
 function deleteAgenda(fecha){if(!confirm('¿Eliminar esta entrada?'))return;state.agenda=state.agenda.filter(a=>a.fecha!==fecha);save();renderAgendaHistorial();}
 
 // ---- INFORME ANUAL ----
