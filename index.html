@@ -182,6 +182,25 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 .org-name{font-size:11px;font-weight:500;line-height:1.2}
 .org-sep{display:flex;align-items:center;gap:6px;margin:6px 0;color:var(--text-tertiary);font-size:10px;text-transform:uppercase;letter-spacing:0.04em}
 .org-sep::before,.org-sep::after{content:'';flex:1;height:0.5px;background:var(--border-t)}
+.informe-overlay{position:fixed;inset:0;background:#fff;z-index:200;overflow-y:auto;padding:0}
+.informe-toolbar{background:#185FA5;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+.informe-body{max-width:700px;margin:0 auto;padding:24px 20px 40px}
+.inf-header{display:flex;gap:16px;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:1.5px solid #185FA5}
+.inf-foto{width:80px;height:80px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #185FA5}
+.inf-foto-placeholder{width:80px;height:80px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;color:#185FA5;flex-shrink:0}
+.inf-section{margin-bottom:18px}
+.inf-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#185FA5;border-bottom:0.5px solid #185FA5;padding-bottom:4px;margin-bottom:10px}
+.inf-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;font-size:13px}
+.inf-label{color:#5f5e5a;min-width:120px;flex-shrink:0}
+.inf-val{font-weight:500}
+.inf-table{width:100%;border-collapse:collapse;font-size:12px}
+.inf-table th{background:#f1efe8;padding:6px 8px;text-align:left;font-weight:500;font-size:11px;color:#5f5e5a}
+.inf-table td{padding:6px 8px;border-bottom:0.5px solid #e8e6df}
+@media print{
+  .informe-toolbar{display:none!important}
+  .informe-body{padding:16px}
+  body>*:not(.informe-overlay){display:none!important}
+}
 </style>
 </head>
 <body>
@@ -573,6 +592,16 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   </div>
 </div>
 
+<!-- INFORME ANUAL -->
+<div id="informe-overlay" class="informe-overlay hidden">
+  <div class="informe-toolbar">
+    <button class="btn btn-icon" style="color:#fff;border-color:rgba(255,255,255,0.3)" onclick="closeInforme()"><i class="ti ti-arrow-left"></i></button>
+    <span style="font-size:14px;font-weight:500;flex:1">Informe anual del cadete</span>
+    <button class="btn btn-sm" style="color:#fff;border-color:rgba(255,255,255,0.4)" onclick="window.print()"><i class="ti ti-printer"></i> Imprimir</button>
+  </div>
+  <div class="informe-body" id="informe-body"></div>
+</div>
+
 <script>
 let _tempFoto='';
 function handleFotoUpload(input){
@@ -787,6 +816,7 @@ function renderCadetes(){
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">
           <button class="btn btn-sm btn-icon" onclick="openTareaCadete(${c.id})" title="Asignar tarea"><i class="ti ti-clipboard-plus"></i></button>
+          <button class="btn btn-sm btn-icon" onclick="openInforme(${c.id})" title="Informe anual"><i class="ti ti-file-description"></i></button>
           <button class="btn btn-sm btn-icon" onclick="editCadete(${c.id})" title="Editar"><i class="ti ti-edit"></i></button>
           <button class="btn btn-sm btn-icon btn-danger" onclick="deleteCadete(${c.id})" title="Eliminar"><i class="ti ti-trash"></i></button>
         </div>
@@ -1114,6 +1144,121 @@ function saveMiTarea(){
 }
 function toggleMiTarea(id){const t=state.misTareas.find(x=>x.id===id);if(t)t.done=!t.done;save();render();}
 function deleteMiTarea(id){if(!confirm('¿Eliminar?'))return;state.misTareas=state.misTareas.filter(t=>t.id!==id);save();render();}
+
+// ---- INFORME ANUAL ----
+function openInforme(cadetId){
+  document.getElementById('informe-body').innerHTML=renderInforme(cadetId);
+  document.getElementById('informe-overlay').classList.remove('hidden');
+  document.getElementById('informe-overlay').scrollTop=0;
+}
+function closeInforme(){document.getElementById('informe-overlay').classList.add('hidden');}
+function renderInforme(cadetId){
+  const c=getCadetById(cadetId);if(!c)return'';
+  const col=getColor(state.cadetes.findIndex(x=>x.id===cadetId));
+  const notas=state.notas.filter(n=>n.cadetId===cadetId);
+  const avgN=notas.length?(notas.reduce((a,b)=>a+b.nota,0)/notas.length).toFixed(2):null;
+  const sanciones=state.sanciones.filter(s=>s.cadetId===cadetId);
+  const tareas=state.tareasCadetes.filter(t=>t.cadetId===cadetId);
+  const tareasDone=tareas.filter(t=>t.done);
+  const tareasPend=tareas.filter(t=>!t.done);
+  // ejercicios donde participó
+  const ejPartic=state.ejercicios.filter(e=>e.cadetData[cadetId]!=null);
+  const notasEj=ejPartic.map(e=>parseFloat(e.cadetData[cadetId]?.nota)).filter(n=>!isNaN(n));
+  const avgEj=notasEj.length?(notasEj.reduce((a,b)=>a+b,0)/notasEj.length).toFixed(1):null;
+  // criterios medios (solo puestos evaluables)
+  const evalEj=ejPartic.filter(e=>e.cadetData[cadetId]?.tipoPuesto==='evaluable');
+  const avgCrit=(fid)=>{const vals=evalEj.map(e=>parseFloat(e.cadetData[cadetId]?.['c'+fid])).filter(n=>!isNaN(n));return vals.length?(vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1):null;};
+
+  const today2=new Date().toLocaleDateString('es-ES',{day:'numeric',month:'long',year:'numeric'});
+
+  return`
+  <div style="text-align:center;margin-bottom:20px">
+    <div style="font-size:11px;color:#5f5e5a;letter-spacing:0.06em;text-transform:uppercase">Academia General Militar · Sección de Cadetes</div>
+    <div style="font-size:18px;font-weight:600;color:#185FA5;margin:4px 0">Informe de rendimiento anual — 4º Curso</div>
+    <div style="font-size:11px;color:#888">Emitido el ${today2}</div>
+  </div>
+
+  <div class="inf-header">
+    ${c.foto?`<img src="${c.foto}" class="inf-foto" alt="">`:`<div class="inf-foto-placeholder">${initials(c.nombre)}</div>`}
+    <div style="flex:1">
+      <div style="font-size:18px;font-weight:600;margin-bottom:6px">${c.nombre}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 16px;font-size:12px">
+        ${c.dni?`<div><span style="color:#5f5e5a">DNI:</span> <strong>${c.dni}</strong></div>`:''}
+        ${c.fnac?`<div><span style="color:#5f5e5a">F. nac.:</span> <strong>${fmtDateEs(c.fnac)}</strong></div>`:''}
+        ${c.promGral?`<div><span style="color:#5f5e5a">Prom. gral.:</span> <strong>${c.promGral}</strong></div>`:''}
+        ${c.promIng?`<div><span style="color:#5f5e5a">Prom. ing.:</span> <strong>${c.promIng}</strong></div>`:''}
+        ${c.puesto?`<div><span style="color:#5f5e5a">Puesto:</span> <strong>${c.puesto}</strong></div>`:''}
+        ${c.acceso?`<div><span style="color:#5f5e5a">Acceso:</span> <strong>${ACCESO_LABEL[c.acceso]||c.acceso}</strong></div>`:''}
+        ${c.procMil==='si'?`<div><span style="color:#5f5e5a">Proc. militar:</span> <strong>${c.empleo||'Sí'}</strong></div>`:''}
+        ${c.antiguedad?`<div><span style="color:#5f5e5a">Antigüedad:</span> <strong>${c.antiguedad}</strong></div>`:''}
+      </div>
+    </div>
+  </div>
+
+  ${(c.ipa1||c.ipa2||c.ipa3||c.ipaCurso)?`
+  <div class="inf-section">
+    <div class="inf-section-title">Notas IPA</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${[['1er curso',c.ipa1],['2º curso',c.ipa2],['3er curso',c.ipa3],['4º curso (actual)',c.ipaCurso]].map(([yr,v])=>v?`
+      <div style="background:#f8f7f4;border-radius:8px;padding:10px 14px;text-align:center;min-width:90px">
+        <div style="font-size:10px;color:#5f5e5a;margin-bottom:4px">${yr}</div>
+        <div style="font-size:22px;font-weight:600;color:${parseFloat(v)>=5?'#27500A':'#791F1F'}">${parseFloat(v).toFixed(2)}</div>
+      </div>`:''
+      ).join('')}
+    </div>
+  </div>`:''}
+
+  <div class="inf-section">
+    <div class="inf-section-title">Notas académicas ${avgN?`— Media: <span style="color:#185FA5">${avgN}</span>`:''}</div>
+    ${notas.length?`<table class="inf-table"><thead><tr><th>Asignatura</th><th>Conv.</th><th>Nota</th><th>Obs.</th></tr></thead><tbody>
+    ${notas.map(n=>`<tr><td>${n.asignatura}</td><td>${n.conv}</td><td style="font-weight:600;color:${n.nota>=5?'#27500A':'#791F1F'}">${n.nota.toFixed(1)}</td><td style="color:#5f5e5a;font-size:11px">${n.obs||'—'}</td></tr>`).join('')}
+    </tbody></table>`:`<div style="font-size:12px;color:#888">Sin notas registradas.</div>`}
+  </div>
+
+  <div class="inf-section">
+    <div class="inf-section-title">Rendimiento en ejercicios ${avgEj?`— Media: <span style="color:#185FA5">${avgEj}</span>`:''}</div>
+    ${ejPartic.length?`<table class="inf-table"><thead><tr><th>Ejercicio</th><th>Fecha</th><th>Puesto / Rol</th><th>Nota</th></tr></thead><tbody>
+    ${ejPartic.map(e=>{const d=e.cadetData[cadetId];const nota=parseFloat(d?.nota);const isEval=d?.tipoPuesto==='evaluable';
+    return`<tr><td>${e.nombre}</td><td style="white-space:nowrap">${fmtDateEs(e.fecha)}</td><td>${isEval?`<strong>${d.rolEval||'Evaluable'}</strong>`:'Zapador'}${d?.temaTactico?`<br><span style="font-size:10px;color:#5f5e5a">${d.temaTactico}</span>`:''}</td><td style="font-weight:600;color:${!isNaN(nota)&&nota>=5?'#27500A':'#791F1F'}">${isNaN(nota)?'—':nota.toFixed(1)}</td></tr>`;}).join('')}
+    </tbody></table>`:`<div style="font-size:12px;color:#888">Sin ejercicios registrados.</div>`}
+    ${evalEj.length?`<div style="margin-top:10px;background:#f1efe8;border-radius:8px;padding:10px 14px">
+      <div style="font-size:11px;font-weight:500;margin-bottom:6px;color:#185FA5">Media criterios de evaluación (puestos evaluables)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px">
+      ${CRITERIOS.map(([fid,lbl])=>{const v=avgCrit(fid);return v?`<div style="font-size:12px"><span style="color:#5f5e5a">${lbl}:</span> <strong>${v}</strong></div>`:''}).join('')}
+      </div>
+    </div>`:''}
+  </div>
+
+  <div class="inf-section">
+    <div class="inf-section-title">Tareas asignadas</div>
+    ${tareasDone.length?`<div style="margin-bottom:8px;font-size:11px;font-weight:500;color:#27500A">Completadas (${tareasDone.length})</div>
+    <table class="inf-table" style="margin-bottom:10px"><thead><tr><th>Tarea</th><th>Valoración</th><th>Observaciones</th></tr></thead><tbody>
+    ${tareasDone.map(t=>`<tr><td>${t.tarea}</td><td style="font-weight:600;text-align:center">${t.valoracion!==undefined&&t.valoracion!==''?parseFloat(t.valoracion).toFixed(1):'—'}</td><td style="font-size:11px;color:#5f5e5a">${t.valoracionObs||'—'}</td></tr>`).join('')}
+    </tbody></table>`:''}
+    ${tareasPend.length?`<div style="font-size:11px;color:#BA7517;font-weight:500">${tareasPend.length} tarea${tareasPend.length>1?'s':''} pendiente${tareasPend.length>1?'s':''}: ${tareasPend.map(t=>t.tarea).join(', ')}</div>`:''}
+    ${!tareas.length?`<div style="font-size:12px;color:#888">Sin tareas registradas.</div>`:''}
+  </div>
+
+  <div class="inf-section">
+    <div class="inf-section-title">Sanciones disciplinarias (LORDFAS)</div>
+    ${sanciones.length?`<table class="inf-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Descripción</th><th>Firmeza</th></tr></thead><tbody>
+    ${sanciones.map(s=>`<tr><td style="white-space:nowrap">${fmtDateEs(s.fecha)}</td><td><span style="font-weight:500;color:${s.tipo==='leve'?'#BA7517':s.tipo==='grave'?'#E24B4A':'#791F1F'}">${{leve:'Leve',grave:'Grave','muy-grave':'Muy grave'}[s.tipo]}</span></td><td>${s.desc}</td><td style="font-size:11px;color:#5f5e5a">${s.firmeza}</td></tr>`).join('')}
+    </tbody></table>`:`<div style="font-size:12px;color:#888">Sin sanciones registradas.</div>`}
+  </div>
+
+  ${c.obs?`<div class="inf-section"><div class="inf-section-title">Observaciones generales</div><div style="font-size:13px;color:#1a1a18;line-height:1.6;padding:10px 12px;background:#f8f7f4;border-radius:8px">${c.obs}</div></div>`:''}
+
+  <div style="margin-top:32px;padding-top:16px;border-top:0.5px solid #e8e6df;display:grid;grid-template-columns:1fr 1fr;gap:40px">
+    <div style="text-align:center">
+      <div style="height:40px"></div>
+      <div style="border-top:0.5px solid #1a1a18;padding-top:6px;font-size:11px;color:#5f5e5a">El Jefe de Sección</div>
+    </div>
+    <div style="text-align:center">
+      <div style="height:40px"></div>
+      <div style="border-top:0.5px solid #1a1a18;padding-top:6px;font-size:11px;color:#5f5e5a">El Cadete</div>
+    </div>
+  </div>`;
+}
 
 // ---- ORGANIGRAMA ----
 const ORG_SLOTS=[
