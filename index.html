@@ -371,6 +371,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         <div class="sub-tabs">
           <button class="sub-tab active" onclick="showMstSubTab('tareas')" id="sub-mst-tareas"><i class="ti ti-checklist" style="font-size:13px"></i> Tareas</button>
           <button class="sub-tab" onclick="showMstSubTab('agenda')" id="sub-mst-agenda"><i class="ti ti-notebook" style="font-size:13px"></i> Agenda / Diario</button>
+          <button class="sub-tab" onclick="showMstSubTab('docs')" id="sub-mst-docs"><i class="ti ti-folder" style="font-size:13px"></i> Documentos</button>
         </div>
         <div id="mst-alerts"></div>
         <div id="subtab-mst-tareas">
@@ -443,6 +444,59 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
             <div id="agenda-semana-dias"></div>
           </div>
         </div><!-- /subtab-mst-agenda -->
+
+        <div id="subtab-mst-docs" class="hidden">
+          <div class="section-header"><span class="section-title">Documentos de la Sección</span></div>
+
+          <!-- Zona de subida -->
+          <div class="card" id="docs-dropzone" style="border:2px dashed var(--border-s);background:var(--bg-secondary);text-align:center;padding:2rem 1rem;cursor:pointer"
+            onclick="document.getElementById('docs-file-input').click()"
+            ondragover="event.preventDefault();this.style.borderColor='#185FA5'"
+            ondragleave="this.style.borderColor=''"
+            ondrop="event.preventDefault();this.style.borderColor='';docsHandleFiles(event.dataTransfer.files)">
+            <i class="ti ti-cloud-upload" style="font-size:36px;color:#185FA5;margin-bottom:8px"></i>
+            <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Subir documento</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">PDF, Word, Excel, PowerPoint · Arrastra o haz clic</div>
+            <input type="file" id="docs-file-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.odt,.ods,.odp"
+              onchange="docsHandleFiles(this.files)" multiple>
+          </div>
+
+          <!-- Filtro / categoría -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
+            <button class="sub-tab active" onclick="docsSetCat('todos')" id="docs-cat-todos">Todos</button>
+            <button class="sub-tab" onclick="docsSetCat('planning')" id="docs-cat-planning">Planning I/A</button>
+            <button class="sub-tab" onclick="docsSetCat('ordenes')" id="docs-cat-ordenes">Órdenes</button>
+            <button class="sub-tab" onclick="docsSetCat('informes')" id="docs-cat-informes">Informes</button>
+            <button class="sub-tab" onclick="docsSetCat('otros')" id="docs-cat-otros">Otros</button>
+          </div>
+
+          <div id="lista-docs"></div>
+        </div><!-- /subtab-mst-docs -->
+
+        <!-- Modal categoría documento -->
+        <div id="modal-doc-cat" class="modal hidden">
+          <div class="modal-box" style="max-width:340px">
+            <div class="modal-title">Clasificar documento</div>
+            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px" id="doc-cat-nombre"></div>
+            <div class="form-row">
+              <label>Categoría</label>
+              <select id="doc-cat-select">
+                <option value="planning">Planning I/A</option>
+                <option value="ordenes">Órdenes</option>
+                <option value="informes">Informes</option>
+                <option value="otros">Otros</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label>Descripción (opcional)</label>
+              <input id="doc-cat-desc" placeholder="Ej. Planning anual curso 25-26" autocomplete="off">
+            </div>
+            <div class="modal-actions">
+              <button class="btn" onclick="docsCancelModal()">Cancelar</button>
+              <button class="btn btn-primary" onclick="docsConfirmUpload()">Guardar</button>
+            </div>
+          </div>
+        </div>
 
       </div><!-- /tab-mstareas -->
 
@@ -834,7 +888,7 @@ let state={
   activeTab:'dashboard',
   activeSubTab:{cadetes:'ficha',mstareas:'tareas'},
 };
-(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';}}catch(e){}}());
+(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;}}catch(e){}}());
 function save(){try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}}
 
 function showTab(t){
@@ -1416,13 +1470,98 @@ function deleteMiTarea(id){if(!confirm('¿Eliminar?'))return;state.misTareas=sta
 // ---- AGENDA / DIARIO ----
 function showMstSubTab(sub){
   state.activeSubTab.mstareas=sub;
-  ['tareas','agenda'].forEach(s=>{
+  ['tareas','agenda','docs'].forEach(s=>{
     const el=document.getElementById('subtab-mst-'+s);
     const btn=document.getElementById('sub-mst-'+s);
     if(el)s===sub?el.classList.remove('hidden'):el.classList.add('hidden');
     if(btn)s===sub?btn.classList.add('active'):btn.classList.remove('active');
   });
   if(sub==='agenda')renderAgenda();
+  if(sub==='docs'){docsActiveCat='todos';renderDocs();}
+}
+
+let docsActiveCat='todos';
+let _docsPendingFiles=[];
+let _docsPendingIdx=0;
+
+function docsHandleFiles(files){
+  if(!files||!files.length)return;
+  _docsPendingFiles=Array.from(files);
+  _docsPendingIdx=0;
+  docsNextFile();
+}
+function docsNextFile(){
+  if(_docsPendingIdx>=_docsPendingFiles.length)return;
+  const f=_docsPendingFiles[_docsPendingIdx];
+  document.getElementById('doc-cat-nombre').textContent=f.name;
+  document.getElementById('doc-cat-select').value='planning';
+  document.getElementById('doc-cat-desc').value='';
+  document.getElementById('modal-doc-cat').classList.remove('hidden');
+}
+function docsCancelModal(){
+  document.getElementById('modal-doc-cat').classList.add('hidden');
+  _docsPendingFiles=[];_docsPendingIdx=0;
+  document.getElementById('docs-file-input').value='';
+}
+function docsConfirmUpload(){
+  const f=_docsPendingFiles[_docsPendingIdx];
+  const cat=document.getElementById('doc-cat-select').value;
+  const desc=document.getElementById('doc-cat-desc').value.trim();
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const ext=f.name.split('.').pop().toLowerCase();
+    state.documentos.push({id:state.nextId.documentos++,nombre:f.name,ext,cat,desc,fecha:todayStr(),size:f.size,datos:e.target.result});
+    save();
+    _docsPendingIdx++;
+    document.getElementById('modal-doc-cat').classList.add('hidden');
+    document.getElementById('docs-file-input').value='';
+    if(_docsPendingIdx<_docsPendingFiles.length){docsNextFile();}else{_docsPendingFiles=[];renderDocs();}
+  };
+  reader.readAsDataURL(f);
+}
+function docsSetCat(cat){
+  docsActiveCat=cat;
+  ['todos','planning','ordenes','informes','otros'].forEach(c=>{
+    const btn=document.getElementById('docs-cat-'+c);
+    if(btn)c===cat?btn.classList.add('active'):btn.classList.remove('active');
+  });
+  renderDocs();
+}
+function docsDelete(id){
+  if(!confirm('¿Eliminar este documento?'))return;
+  state.documentos=state.documentos.filter(d=>d.id!==id);
+  save();renderDocs();
+}
+function docsDownload(id){
+  const doc=state.documentos.find(d=>d.id===id);if(!doc)return;
+  const a=document.createElement('a');a.href=doc.datos;a.download=doc.nombre;a.click();
+}
+const DOC_ICONS={pdf:'ti-file-type-pdf',doc:'ti-file-type-doc',docx:'ti-file-type-doc',xls:'ti-file-type-xls',xlsx:'ti-file-type-xls',ppt:'ti-file-type-ppt',pptx:'ti-file-type-ppt',txt:'ti-file-type-txt',odt:'ti-file-description',ods:'ti-file-spreadsheet',odp:'ti-file-presentation'};
+const DOC_COLORS={pdf:'#C0392B',doc:'#185FA5',docx:'#185FA5',xls:'#2E8B4A',xlsx:'#2E8B4A',ppt:'#C47A1E',pptx:'#C47A1E',txt:'#5f5e5a',odt:'#185FA5',ods:'#2E8B4A',odp:'#C47A1E'};
+const CAT_LABEL={planning:'Planning I/A',ordenes:'Órdenes',informes:'Informes',otros:'Otros'};
+function fmtSize(b){if(b>1048576)return(b/1048576).toFixed(1)+' MB';if(b>1024)return Math.round(b/1024)+' KB';return b+' B';}
+function renderDocs(){
+  const el=document.getElementById('lista-docs');if(!el)return;
+  const docs=state.documentos.filter(d=>docsActiveCat==='todos'||d.cat===docsActiveCat);
+  if(!docs.length){el.innerHTML=`<div class="empty"><i class="ti ti-folder-open"></i>No hay documentos${docsActiveCat!=='todos'?' en esta categoría':''}</div>`;return;}
+  el.innerHTML=docs.slice().reverse().map(d=>{
+    const icon=DOC_ICONS[d.ext]||'ti-file';
+    const color=DOC_COLORS[d.ext]||'#888';
+    return`<div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+      <div style="width:40px;height:40px;border-radius:8px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ${icon}" style="font-size:22px;color:${color}"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.nombre}</div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">${CAT_LABEL[d.cat]||d.cat} · ${fmtDateEs(d.fecha)} · ${fmtSize(d.size)}</div>
+        ${d.desc?`<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;font-style:italic">${d.desc}</div>`:''}
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn btn-sm btn-icon" onclick="docsDownload(${d.id})" title="Descargar"><i class="ti ti-download"></i></button>
+        <button class="btn btn-sm btn-icon btn-danger" onclick="docsDelete(${d.id})" title="Eliminar"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
 }
 function agendaPrev(){
   const d=new Date(state.agendaDia+'T12:00:00');d.setDate(d.getDate()-1);
