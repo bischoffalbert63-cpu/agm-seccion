@@ -483,8 +483,8 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         </div><!-- /subtab-mst-docs -->
 
         <!-- Modal actividad planning I/A -->
-        <div id="modal-plan-act" class="modal hidden">
-          <div class="modal-box" style="max-width:380px">
+        <div id="modal-plan-act" class="modal-overlay hidden">
+          <div class="modal" style="max-width:380px">
             <div class="modal-title" id="plan-act-modal-title">Actividad I/A</div>
             <div class="form-row">
               <label>Fecha</label>
@@ -497,11 +497,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
             <div class="form-row">
               <label>Tipo</label>
               <select id="plan-act-tipo">
-                <option value="instruccion">Instrucción</option>
-                <option value="ejercicio">Ejercicio táctico</option>
-                <option value="formacion">Formación</option>
-                <option value="revista">Revista / Inspección</option>
-                <option value="maniobra">Maniobra</option>
+                <option value="icon">ICON</option>
+                <option value="siae">SIAE</option>
+                <option value="maniobras">MANIOBRAS</option>
                 <option value="otro">Otro</option>
               </select>
             </div>
@@ -518,8 +516,8 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         </div>
 
         <!-- Modal categoría documento -->
-        <div id="modal-doc-cat" class="modal hidden">
-          <div class="modal-box" style="max-width:340px">
+        <div id="modal-doc-cat" class="modal-overlay hidden">
+          <div class="modal" style="max-width:340px">
             <div class="modal-title">Clasificar documento</div>
             <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px" id="doc-cat-nombre"></div>
             <div class="form-row">
@@ -922,13 +920,15 @@ let state={
     {id:2,desc:'Informe rendimiento mensual',fechaCreacion:'2026-06-01',fechaPrevista:'2026-06-18',fechaLimite:'2026-06-20',aviso:3,prior:'alta',cat:'Administración',done:false},
     {id:3,desc:'Revisión material de dotación',fechaCreacion:'2026-06-05',fechaPrevista:'2026-06-24',fechaLimite:'2026-06-25',aviso:3,prior:'normal',cat:'Instrucción',done:false},
   ],
-  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4,organigramas:1},
+  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4,organigramas:1,documentos:1,planActividades:1},
   editingCadeteId:null,editingEjId:null,editingOrgId:null,
   calYear:today.getFullYear(),calMonth:today.getMonth(),
   selectedCalDay:null,
   agendaDia:todayStr(),
   agendaVista:'dia',
   agenda:[],
+  documentos:[],
+  planActividades:[],
   activeTab:'dashboard',
   activeSubTab:{cadetes:'ficha',mstareas:'tareas'},
 };
@@ -1299,8 +1299,8 @@ function taskItemMT(t){
     <button class="btn btn-sm btn-icon btn-danger" onclick="deleteMiTarea(${t.id})"><i class="ti ti-trash"></i></button>
   </div>`;
 }
-const PLAN_TIPO_LABEL={instruccion:'Instrucción',ejercicio:'Ejercicio táctico',formacion:'Formación',revista:'Revista / Inspección',maniobra:'Maniobra',otro:'Otro'};
-const PLAN_TIPO_COLOR={instruccion:'#185FA5',ejercicio:'#C47A1E',formacion:'#2E8B4A',revista:'#8B3A8B',maniobra:'#C0392B',otro:'#5f5e5a'};
+const PLAN_TIPO_LABEL={icon:'ICON',siae:'SIAE',maniobras:'MANIOBRAS',otro:'Otro'};
+const PLAN_TIPO_COLOR={icon:'#185FA5',siae:'#2E8B4A',maniobras:'#C0392B',otro:'#5f5e5a'};
 
 function renderCal(){
   const months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
