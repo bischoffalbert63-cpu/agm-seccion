@@ -173,6 +173,15 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 .foto-placeholder{width:72px;height:72px;border-radius:50%;background:var(--bg-secondary);border:2px dashed var(--border-s);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
 .foto-preview{width:72px;height:72px;border-radius:50%;object-fit:cover;cursor:pointer;border:2px solid var(--border-t);flex-shrink:0}
 .cadet-foto{width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.org-level{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
+.org-node{background:var(--bg-primary);border:0.5px solid var(--border-s);border-radius:var(--radius-md);padding:8px 6px;text-align:center;min-width:74px;max-width:92px}
+.org-node.empty{opacity:0.4;border-style:dashed}
+.org-avatar{width:44px;height:44px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;overflow:hidden}
+.org-avatar img{width:100%;height:100%;object-fit:cover}
+.org-role{font-size:9px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:2px}
+.org-name{font-size:11px;font-weight:500;line-height:1.2}
+.org-sep{display:flex;align-items:center;gap:6px;margin:6px 0;color:var(--text-tertiary);font-size:10px;text-transform:uppercase;letter-spacing:0.04em}
+.org-sep::before,.org-sep::after{content:'';flex:1;height:0.5px;background:var(--border-t)}
 </style>
 </head>
 <body>
@@ -221,12 +230,17 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         <div class="sub-tabs">
           <button class="sub-tab active" onclick="showSubTab('cadetes','ficha')" id="sub-cadetes-ficha"><i class="ti ti-users" style="font-size:13px"></i> Fichas</button>
           <button class="sub-tab" onclick="showSubTab('cadetes','sanciones')" id="sub-cadetes-sanciones"><i class="ti ti-gavel" style="font-size:13px"></i> Sanciones</button>
+          <button class="sub-tab" onclick="showSubTab('cadetes','org')" id="sub-cadetes-org"><i class="ti ti-sitemap" style="font-size:13px"></i> Organigrama</button>
         </div>
         <div id="subtab-cadetes-ficha">
           <div class="section-header">
             <span class="section-title">Cadetes</span>
           </div>
           <div id="lista-cadetes"></div>
+        </div>
+        <div id="subtab-cadetes-org" class="hidden">
+          <div class="section-header"><span class="section-title">Organigrama operativo</span></div>
+          <div id="lista-organigramas"></div>
         </div>
         <div id="subtab-cadetes-sanciones" class="hidden">
           <div class="section-header"><span class="section-title">Régimen disciplinario — LORDFAS</span></div>
@@ -375,6 +389,30 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-cadete')">Cancelar</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveCadete()"><i class="ti ti-check"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ORGANIGRAMA -->
+<div id="modal-organigrama" class="modal-overlay hidden">
+  <div class="modal modal-wide">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-org-title">Nuevo organigrama</span>
+      <button class="btn btn-icon" onclick="closeModal('modal-organigrama')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Nombre / operación</label><input id="org-nombre" placeholder="Ej. ICON Zapadores junio 2026" autocomplete="off"></div>
+      <div class="form-row"><label>Fecha</label><input id="org-fecha" type="date"></div>
+      <div class="form-row fullrow"><label>Tema táctico</label>
+        <select id="org-tema"><option value="">— Sin asignar —</option><option>Campo de minas</option><option>Tapones de minas</option><option>Apertura de brechas</option><option>Obstáculos de alambre</option><option>Cruce de curso de agua</option><option>Movimiento en orden de combate</option><option>Ataque a posición</option><option>Ocupación de posición defensiva</option><option>Otro</option></select>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;font-weight:500;margin:10px 0 8px">Asignación de puestos</div>
+    <div id="org-posiciones"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-organigrama')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveOrganigrama()"><i class="ti ti-check"></i>Guardar</button>
     </div>
   </div>
 </div>
@@ -578,6 +616,7 @@ let state={
     {id:3,nombre:'Fernández Vega, Carlos',fnac:'1998-11-08',dni:'34567890C',tel:'600333444',email:'fernandez@ejemplo.com',dir:'Paseo Colón 3, Sevilla',emergNombre:'Fernández Ruiz, María',emergTel:'600555666',promGral:'193',promIng:'87',puesto:'Tirador',acceso:'PIST',procMil:'si',empleo:'Cabo primero',antiguedad:'4 años',obs:''},
     {id:4,nombre:'Torres Molina, Laura',fnac:'1999-05-30',dni:'45678901D',tel:'600444555',email:'torres@ejemplo.com',dir:'Calle Cervantes 8, Valencia',emergNombre:'Torres Sanz, Pedro',emergTel:'600666777',promGral:'193',promIng:'87',puesto:'Sanitario',acceso:'PICT',procMil:'si',empleo:'Soldado',antiguedad:'2 años',obs:''},
   ],
+  organigramas:[],
   sanciones:[],
   tareasCadetes:[
     {id:1,cadetId:1,tarea:'Preparar presentación táctica',fechaAsig:'2026-06-10',fechaLimite:'2026-06-25',prioridad:'alta',done:false},
@@ -602,14 +641,14 @@ let state={
     {id:2,desc:'Informe rendimiento mensual',fechaCreacion:'2026-06-01',fechaPrevista:'2026-06-18',fechaLimite:'2026-06-20',aviso:3,prior:'alta',cat:'Administración',done:false},
     {id:3,desc:'Revisión material de dotación',fechaCreacion:'2026-06-05',fechaPrevista:'2026-06-24',fechaLimite:'2026-06-25',aviso:3,prior:'normal',cat:'Instrucción',done:false},
   ],
-  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4},
-  editingCadeteId:null,editingEjId:null,
+  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4,organigramas:1},
+  editingCadeteId:null,editingEjId:null,editingOrgId:null,
   calYear:today.getFullYear(),calMonth:today.getMonth(),
   selectedCalDay:null,
   activeTab:'dashboard',
   activeSubTab:{cadetes:'ficha'},
 };
-(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;}}catch(e){}}());
+(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];}}catch(e){}}());
 function save(){try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}}
 
 function showTab(t){
@@ -631,6 +670,7 @@ function fabAction(){
   const t=state.activeTab;
   if(t==='cadetes'){
     if(state.activeSubTab.cadetes==='sanciones'){openModal('modal-sancion');populateSancionSelect();}
+    else if(state.activeSubTab.cadetes==='org'){openModal('modal-organigrama');document.getElementById('modal-org-title').textContent='Nuevo organigrama';state.editingOrgId=null;document.getElementById('org-nombre').value='';document.getElementById('org-fecha').value=todayStr();document.getElementById('org-tema').value='';renderOrgPosiciones();}
     else{openModal('modal-cadete');document.getElementById('modal-cadete-title').textContent='Añadir cadete';state.editingCadeteId=null;clearCadeteForm();}
   } else if(t==='notas'){openModal('modal-nota');populateNotaSelect();}
   else if(t==='ejercicios'){openModal('modal-ejercicio');document.getElementById('modal-ej-title').textContent='Nuevo ejercicio';state.editingEjId=null;clearEjForm();renderEjCadetes();}
@@ -638,7 +678,7 @@ function fabAction(){
 }
 function showSubTab(tab,sub){
   state.activeSubTab[tab]=sub;
-  ['ficha','sanciones'].forEach(s=>{
+  ['ficha','sanciones','org'].forEach(s=>{
     const el=document.getElementById('subtab-'+tab+'-'+s);
     const btn=document.getElementById('sub-'+tab+'-'+s);
     if(el)s===sub?el.classList.remove('hidden'):el.classList.add('hidden');
@@ -660,7 +700,7 @@ function taskAlertStatus(t){
   if(diff<=parseInt(t.aviso||3))return'warn';
   return null;
 }
-function render(){renderDashboard();renderCadetes();renderSanciones();renderNotas();renderEjercicios();renderMisTareas();renderCal();renderAlerts();}
+function render(){renderDashboard();renderCadetes();renderSanciones();renderOrganigrama();renderNotas();renderEjercicios();renderMisTareas();renderCal();renderAlerts();}
 function renderAlerts(){
   const alerts=[];const td=todayStr();
   state.misTareas.filter(t=>!t.done&&t.fechaLimite).forEach(t=>{
@@ -1074,6 +1114,91 @@ function saveMiTarea(){
 }
 function toggleMiTarea(id){const t=state.misTareas.find(x=>x.id===id);if(t)t.done=!t.done;save();render();}
 function deleteMiTarea(id){if(!confirm('¿Eliminar?'))return;state.misTareas=state.misTareas.filter(t=>t.id!==id);save();render();}
+
+// ---- ORGANIGRAMA ----
+const ORG_SLOTS=[
+  {id:'jefIng',   label:'Jefe de Ingenieros', nivel:0},
+  {id:'jefSecc',  label:'Jefe de Sección',    nivel:1},
+  {id:'jefPn1',   label:'Jefe de Pelotón 1',  nivel:2},
+  {id:'jefPn2',   label:'Jefe de Pelotón 2',  nivel:2},
+  {id:'jefEq1',   label:'Jefe de Equipo 1',   nivel:3},
+  {id:'jefEq2',   label:'Jefe de Equipo 2',   nivel:3},
+  {id:'jefEq3',   label:'Jefe de Equipo 3',   nivel:3},
+  {id:'jefEq4',   label:'Jefe de Equipo 4',   nivel:3},
+];
+function renderOrgPosiciones(posiciones){
+  const opts=`<option value="">— Sin asignar —</option>`+state.cadetes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
+  document.getElementById('org-posiciones').innerHTML=ORG_SLOTS.map(s=>`
+    <div class="form-row" style="margin-bottom:8px">
+      <label>${s.label}</label>
+      <select id="orgp-${s.id}">${opts}</select>
+    </div>`).join('');
+  if(posiciones)ORG_SLOTS.forEach(s=>{const el=document.getElementById('orgp-'+s.id);if(el&&posiciones[s.id])el.value=posiciones[s.id];});
+}
+function saveOrganigrama(){
+  const nombre=document.getElementById('org-nombre').value.trim();if(!nombre)return;
+  const posiciones={};
+  ORG_SLOTS.forEach(s=>{const v=document.getElementById('orgp-'+s.id)?.value;if(v)posiciones[s.id]=parseInt(v);});
+  const entry={id:state.nextId.organigramas++,nombre,fecha:document.getElementById('org-fecha').value,temaTactico:document.getElementById('org-tema').value,posiciones};
+  if(state.editingOrgId){
+    const idx=state.organigramas.findIndex(o=>o.id===state.editingOrgId);
+    if(idx>=0){entry.id=state.editingOrgId;state.organigramas[idx]=entry;}
+    state.editingOrgId=null;
+  } else {
+    state.organigramas.push(entry);
+  }
+  save();closeModal('modal-organigrama');renderOrganigrama();
+}
+function editOrganigrama(id){
+  const o=state.organigramas.find(x=>x.id===id);if(!o)return;
+  state.editingOrgId=id;
+  document.getElementById('modal-org-title').textContent='Editar organigrama';
+  document.getElementById('org-nombre').value=o.nombre;
+  document.getElementById('org-fecha').value=o.fecha||'';
+  document.getElementById('org-tema').value=o.temaTactico||'';
+  renderOrgPosiciones(o.posiciones);
+  openModal('modal-organigrama');
+}
+function deleteOrganigrama(id){if(!confirm('¿Eliminar organigrama?'))return;state.organigramas=state.organigramas.filter(o=>o.id!==id);save();renderOrganigrama();}
+function renderOrganigrama(){
+  const el=document.getElementById('lista-organigramas');if(!el)return;
+  if(!state.organigramas.length){el.innerHTML=`<div class="empty"><i class="ti ti-sitemap"></i>No hay organigramas. Pulsa + para crear uno.</div>`;return;}
+  el.innerHTML=state.organigramas.map(o=>{
+    const niveles=[0,1,2,3];
+    const nivelesHTML=niveles.map(niv=>{
+      const slots=ORG_SLOTS.filter(s=>s.nivel===niv);
+      const nodes=slots.map(s=>{
+        const cid=o.posiciones[s.id];
+        const c=cid?getCadetById(cid):null;
+        const col=c?getColor(state.cadetes.findIndex(x=>x.id===c.id)):'#888';
+        return`<div class="org-node${c?'':' empty'}">
+          <div class="org-avatar" style="background:${c?col+'22':'var(--bg-secondary)'};color:${col}">
+            ${c&&c.foto?`<img src="${c.foto}" alt="">`:(c?initials(c.nombre):'?')}
+          </div>
+          <div class="org-role">${s.label}</div>
+          <div class="org-name">${c?c.nombre.split(',')[0]:'Sin asignar'}</div>
+        </div>`;
+      }).join('');
+      return`<div class="org-level">${nodes}</div>`;
+    }).join(`<div class="org-sep">▼</div>`);
+    // zapadores = cadetes no asignados a ningún puesto
+    const asignados=new Set(Object.values(o.posiciones).filter(Boolean));
+    const zaps=state.cadetes.filter(c=>!asignados.has(c.id));
+    const zapsHTML=zaps.length?`<div class="org-sep">Zapadores</div><div class="org-level" style="flex-wrap:wrap">${zaps.map((c,i)=>{const col=getColor(state.cadetes.findIndex(x=>x.id===c.id));return`<div class="org-node"><div class="org-avatar" style="background:${col}22;color:${col}">${c.foto?`<img src="${c.foto}" alt="">`:initials(c.nombre)}</div><div class="org-name">${c.nombre.split(',')[0]}</div></div>`;}).join('')}</div>`:''
+    return`<div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:6px">
+        <div><div style="font-size:14px;font-weight:500">${o.nombre}</div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:2px">${o.temaTactico?`<span class="badge badge-purple" style="font-size:10px">${o.temaTactico}</span> `:''} ${fmtDateEs(o.fecha)}</div></div>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-sm btn-icon" onclick="editOrganigrama(${o.id})" title="Editar"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="deleteOrganigrama(${o.id})" title="Eliminar"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      ${nivelesHTML}
+      ${zapsHTML}
+    </div>`;
+  }).join('');
+}
 
 // PWA Service Worker
 if('serviceWorker' in navigator){
