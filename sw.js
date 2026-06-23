@@ -1,11 +1,15 @@
-const CACHE_STATIC = 'agm-static-v11';
-const CACHE_DYNAMIC = 'agm-dynamic-v11';
+const CACHE_STATIC = 'agm-static-v12';
+const CACHE_DYNAMIC = 'agm-dynamic-v12';
 
 // Recursos críticos — siempre en caché
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './logo-ingenieros.jpg',
+  './escudo-inf.png',
+  './icon-192.png',
+  './icon-512.png',
 ];
 
 // CDN externos — caché separado, no bloquea instalación
