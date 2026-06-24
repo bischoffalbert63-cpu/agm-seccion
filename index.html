@@ -786,6 +786,37 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 </div>
 
 <!-- MODAL SANCION -->
+<div id="modal-tutoria" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-tutoria-title">Nueva tutoría</span>
+      <button class="btn btn-icon" onclick="closeModal('modal-tutoria')"><i class="ti ti-x"></i></button>
+    </div>
+    <input type="hidden" id="tut-id">
+    <input type="hidden" id="tut-cadet-id">
+    <div class="form-row"><label>Cadete</label><input id="tut-cadet-nombre" readonly style="background:var(--bg-secondary)"></div>
+    <div class="form-row"><label>Fecha</label><input id="tut-fecha" type="date"></div>
+    <div class="form-row"><label>Tipo</label>
+      <select id="tut-tipo">
+        <option value="rutinaria">Rutinaria</option>
+        <option value="seguimiento">Seguimiento</option>
+        <option value="orientacion">Orientación</option>
+        <option value="disciplinaria">Disciplinaria</option>
+        <option value="otro">Otro</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Temas tratados</label><textarea id="tut-temas" placeholder="Asuntos abordados en la entrevista..." rows="3"></textarea></div>
+    <div class="form-row"><label>Acuerdos / compromisos</label><textarea id="tut-acuerdos" placeholder="Compromisos adquiridos por el cadete..." rows="2"></textarea></div>
+    <div class="form-row"><label>Próxima entrevista</label><input id="tut-proxima" type="date"></div>
+    <div class="form-row"><label>Notas reservadas</label><textarea id="tut-notas" placeholder="Notas internas (no visibles en informes)..." rows="2"></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-tutoria')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveTutoria()"><i class="ti ti-check"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-sancion" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-drag"></div>
@@ -1332,7 +1363,8 @@ let state={
   servicios:[],
   asistencia:[],
   taf:[],
-  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4,organigramas:1,documentos:1,planActividades:63,permisos:1,servicios:1,asistencia:1,taf:1},
+  tutorias:[],
+  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4,organigramas:1,documentos:1,planActividades:63,permisos:1,servicios:1,asistencia:1,taf:1,tutorias:1},
   editingCadeteId:null,editingEjId:null,editingOrgId:null,
   calYear:today.getFullYear(),calMonth:today.getMonth(),
   selectedCalDay:null,
@@ -1407,7 +1439,7 @@ let state={
   activeTab:'dashboard',
   activeSubTab:{cadetes:'ficha',ejercicios:'lista',mstareas:'tareas'},
 };
-(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;if(!state.planActividades||!state.planActividades.length){state.planActividades=state.planActividades||[];}if(!state.permisos)state.permisos=[];if(!state.nextId.permisos)state.nextId.permisos=1;}}catch(e){}}());
+(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;if(!state.planActividades||!state.planActividades.length){state.planActividades=state.planActividades||[];}if(!state.permisos)state.permisos=[];if(!state.nextId.permisos)state.nextId.permisos=1;if(!state.tutorias)state.tutorias=[];if(!state.nextId.tutorias)state.nextId.tutorias=1;}}catch(e){}}());
 // ---- FIREBASE ----
 const _fbConfig={apiKey:"AIzaSyA1KSfaNVrNsPXXGZoHHadUPcchsDBm5DE",authDomain:"agm-seccion.firebaseapp.com",projectId:"agm-seccion",storageBucket:"agm-seccion.firebasestorage.app",messagingSenderId:"1084982496386",appId:"1:1084982496386:web:5bc93f6f23524d91ea789b"};
 let _fbApp=null,_fbDb=null,_fbSt=null,_fbReady=false;
@@ -1800,7 +1832,7 @@ function renderFichaCadet(){
     </div>`;
 
   // Tabs
-  const tabs=[['ficha','ti-user','Ficha'],['notas','ti-notebook','Notas'],['ejercicios','ti-map-2','Ejercicios'],['tareas','ti-checklist','Tareas'],['sanciones','ti-gavel','Sanciones'],['permisos','ti-beach','Permisos']];
+  const tabs=[['ficha','ti-user','Ficha'],['notas','ti-notebook','Notas'],['ejercicios','ti-map-2','Ejercicios'],['tareas','ti-checklist','Tareas'],['sanciones','ti-gavel','Sanciones'],['permisos','ti-beach','Permisos'],['tutorias','ti-message-2','Tutorías']];
   document.getElementById('ficha-cadet-tabs').innerHTML=tabs.map(([t,icon,lbl])=>
     `<button onclick="fichaSetTab('${t}')" style="flex-shrink:0;border:none;padding:9px 14px;font-size:12px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all 0.15s;${_fichaTab===t?'background:#fff;color:#185FA5;font-weight:700;border-bottom:3px solid #185FA5;':'background:transparent;color:rgba(255,255,255,0.7);font-weight:400;border-bottom:3px solid transparent;'}"><i class="ti ${icon}" style="font-size:13px"></i>${lbl}</button>`
   ).join('');
@@ -1986,6 +2018,13 @@ function renderFichaCadet(){
     const perms=state.permisos.filter(p=>p.cadetId===c.id).sort((a,b)=>b.inicio>a.inicio?1:-1);
     html=`<div class="section-header"><span class="section-title" style="font-size:13px">Permisos y bajas</span><button class="btn btn-sm btn-primary" onclick="populatePermisoSelect();openPermisoModal();document.getElementById('p-cadete').value=${c.id}"><i class="ti ti-plus"></i> Añadir</button></div>
     ${perms.length?perms.map(p=>{const t2=PERMISO_TIPO[p.tipo]||PERMISO_TIPO.otro;const activo=p.inicio<=td&&(!p.fin||p.fin>=td);const dias=p.fin?diffDays(p.inicio,p.fin)+1:null;return`<div class="card" style="${activo?'border-left:3px solid '+t2.color:''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px"><span class="badge ${t2.badge}" style="font-size:10px">${t2.lbl}</span>${activo?`<span class="badge badge-green" style="font-size:10px">En curso</span>`:''}</div><div style="font-size:12px;color:var(--text-secondary)">${fmtDateEs(p.inicio)}${p.fin?' → '+fmtDateEs(p.fin):''}${dias?` · ${dias} día${dias!==1?'s':''}`:''}</div>${p.motivo?`<div style="font-size:13px;font-weight:500;margin-top:3px">${p.motivo}</div>`:''}</div><button class="btn btn-sm btn-icon" onclick="openPermisoModal(${p.id})"><i class="ti ti-edit"></i></button></div></div>`;}).join(''):`<div class="empty"><i class="ti ti-beach"></i>Sin permisos ni bajas</div>`}`;
+  } else if(_fichaTab==='tutorias'){
+    const tuts=(state.tutorias||[]).filter(t=>t.cadetId===c.id).sort((a,b)=>b.fecha>a.fecha?1:-1);
+    const TUT_TIPO={rutinaria:{lbl:'Rutinaria',badge:'badge-blue'},seguimiento:{lbl:'Seguimiento',badge:'badge-green'},orientacion:{lbl:'Orientación',badge:'badge-purple'},disciplinaria:{lbl:'Disciplinaria',badge:'badge-red'},otro:{lbl:'Otro',badge:'badge-gray'}};
+    const proxima=tuts.find(t=>t.proxima&&t.proxima>=td);
+    html=`<div class="section-header"><span class="section-title" style="font-size:13px">Tutorías y entrevistas</span><button class="btn btn-sm btn-primary" onclick="openTutoriaModal(${c.id})"><i class="ti ti-plus"></i> Nueva</button></div>
+    ${proxima?`<div class="card" style="border-left:3px solid #185FA5;margin-bottom:10px"><div style="font-size:11px;color:#185FA5;font-weight:600;text-transform:uppercase;letter-spacing:0.05em">Próxima entrevista</div><div style="font-size:14px;font-weight:600;margin-top:2px">${fmtDateEs(proxima.proxima)}</div></div>`:''}
+    ${tuts.length?tuts.map(t=>{const tp=TUT_TIPO[t.tipo]||TUT_TIPO.otro;return`<div class="card"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:6px"><span class="badge ${tp.badge}" style="font-size:10px">${tp.lbl}</span><span style="font-size:12px;color:var(--text-secondary)">${fmtDateEs(t.fecha)}</span></div>${t.temas?`<div style="font-size:13px;font-weight:500;margin-bottom:4px">${t.temas}</div>`:''}${t.acuerdos?`<div style="font-size:12px;color:var(--text-secondary);margin-bottom:3px"><i class="ti ti-check" style="font-size:11px"></i> ${t.acuerdos}</div>`:''}${t.proxima?`<div style="font-size:11px;color:#185FA5;margin-top:4px"><i class="ti ti-calendar" style="font-size:11px"></i> Próxima: ${fmtDateEs(t.proxima)}</div>`:''}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-icon" onclick="openTutoriaModal(${c.id},${t.id})"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger" onclick="deleteTutoria(${t.id})"><i class="ti ti-trash"></i></button></div></div></div>`;}).join(''):`<div class="empty"><i class="ti ti-message-2"></i>Sin tutorías registradas</div>`}`;
   }
   document.getElementById('ficha-cadet-body').innerHTML=html;
 }
@@ -3680,6 +3719,50 @@ function openPermisoModal(id){
   document.getElementById('permiso-del-btn').style.display=p?'':'none';
   openModal('modal-permiso');
 }
+// ---- TUTORIAS ----
+function openTutoriaModal(cadetId, tutId){
+  const c=getCadetById(cadetId);
+  document.getElementById('tut-cadet-id').value=cadetId;
+  document.getElementById('tut-cadet-nombre').value=c?c.nombre:'';
+  if(tutId){
+    const t=state.tutorias.find(x=>x.id===tutId);
+    if(!t)return;
+    document.getElementById('tut-id').value=tutId;
+    document.getElementById('modal-tutoria-title').textContent='Editar tutoría';
+    document.getElementById('tut-fecha').value=t.fecha;
+    document.getElementById('tut-tipo').value=t.tipo;
+    document.getElementById('tut-temas').value=t.temas||'';
+    document.getElementById('tut-acuerdos').value=t.acuerdos||'';
+    document.getElementById('tut-proxima').value=t.proxima||'';
+    document.getElementById('tut-notas').value=t.notas||'';
+  } else {
+    document.getElementById('tut-id').value='';
+    document.getElementById('modal-tutoria-title').textContent='Nueva tutoría';
+    document.getElementById('tut-fecha').value=todayStr();
+    document.getElementById('tut-tipo').value='rutinaria';
+    document.getElementById('tut-temas').value='';
+    document.getElementById('tut-acuerdos').value='';
+    document.getElementById('tut-proxima').value='';
+    document.getElementById('tut-notas').value='';
+  }
+  openModal('modal-tutoria');
+}
+function saveTutoria(){
+  const cadetId=parseInt(document.getElementById('tut-cadet-id').value);
+  const fecha=document.getElementById('tut-fecha').value;
+  if(!fecha)return;
+  const obj={cadetId,fecha,tipo:document.getElementById('tut-tipo').value,temas:document.getElementById('tut-temas').value.trim(),acuerdos:document.getElementById('tut-acuerdos').value.trim(),proxima:document.getElementById('tut-proxima').value,notas:document.getElementById('tut-notas').value.trim()};
+  const editId=parseInt(document.getElementById('tut-id').value);
+  if(editId){Object.assign(state.tutorias.find(x=>x.id===editId),obj);}
+  else{if(!state.tutorias)state.tutorias=[];if(!state.nextId.tutorias)state.nextId.tutorias=1;state.tutorias.push({id:state.nextId.tutorias++,...obj});}
+  save();closeModal('modal-tutoria');renderFichaCadet();
+}
+function deleteTutoria(id){
+  if(!confirm('Eliminar esta tutoría?'))return;
+  state.tutorias=state.tutorias.filter(t=>t.id!==id);
+  save();renderFichaCadet();
+}
+
 function savePermiso(){
   const cadetId=parseInt(document.getElementById('p-cadete').value);
   const inicio=document.getElementById('p-inicio').value;
