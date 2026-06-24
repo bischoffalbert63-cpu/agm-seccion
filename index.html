@@ -3795,7 +3795,10 @@ function renderPermisos(){
           ${p.motivo?`<div style="font-size:12px;font-weight:500">${p.motivo}</div>`:''}
           ${p.obs?`<div style="font-size:11px;color:var(--text-tertiary);font-style:italic;margin-top:2px">${p.obs}</div>`:''}
         </div>
-        <button class="btn btn-sm btn-icon" onclick="openPermisoModal(${p.id})"><i class="ti ti-edit"></i></button>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-sm btn-icon" onclick="populatePermisoSelect();openPermisoModal(${p.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="if(confirm('Eliminar?')){state.permisos=state.permisos.filter(x=>x.id!==${p.id});save();renderPermisos();renderAlerts();}"><i class="ti ti-trash"></i></button>
+        </div>
       </div>
     </div>`;
   }).join('');
