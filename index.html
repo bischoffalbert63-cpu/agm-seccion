@@ -2667,7 +2667,7 @@ function doSearch(q){
     label:t.desc,sub:t.cat||'',action:`closeSearch();showTab('mstareas')`
   }))});
   // Documento fijo: Planning Anual
-  if('planning anual curso 26-27 4 emieo planning'.includes(q))sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:[{label:'Planning Anual Curso 26-27',sub:'4º EMIEO · PDF',action:`closeSearch();window.open('planning.pdf','_blank')`}]});
+  if('planning anual curso 26-27 4 emieo planning'.includes(q))sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:[{label:'Planning Anual Curso 26-27',sub:'4º EMIEO · PDF',action:`closeSearch();showTab('mstareas');showMstSubTab('docs');setTimeout(()=>document.querySelector('a[href="planning.pdf"]')?.scrollIntoView({behavior:'smooth',block:'center'}),300)`}]});
   // Documentos subidos
   const docRes=(state.documentos||[]).filter(d=>(d.nombre||'').toLowerCase().includes(q)||(d.desc||'').toLowerCase().includes(q)||(d.cat||'').toLowerCase().includes(q));
   if(docRes.length)sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:docRes.map(d=>({
