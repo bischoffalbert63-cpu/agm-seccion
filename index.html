@@ -4029,41 +4029,11 @@ function onEjdFileChange(input){
   document.getElementById('ejd-file-name').textContent=f.name+' ('+Math.round(f.size/1024)+' KB)';
 }
 
-// PWA Service Worker
+// Desregistrar cualquier SW previo para evitar caché obsoleta
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
-      reg.update();// fuerza comprobación inmediata en cada carga
-      // Detecta nueva versión disponible
-      reg.addEventListener('updatefound',()=>{
-        const newSW=reg.installing;
-        newSW.addEventListener('statechange',()=>{
-          if(newSW.state==='installed'&&navigator.serviceWorker.controller){
-            // Hay versión nueva "" mostrar banner
-            showUpdateBanner(newSW);
-          }
-        });
-      });
-    }).catch(()=>{});
-
-    // Si el SW tomó control tras actualización → recargar
-    let refreshing=false;
-    navigator.serviceWorker.addEventListener('controllerchange',()=>{
-      if(!refreshing){refreshing=true;location.reload();}
-    });
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
   });
-}
-
-function showUpdateBanner(sw){
-  const b=document.createElement('div');
-  b.id='update-banner';
-  b.innerHTML=`<span><i class="ti ti-refresh-alert" style="font-size:16px;vertical-align:-2px"></i> Nueva versión disponible</span>
-    <button onclick="document.getElementById('update-banner').remove();this._sw.postMessage('SKIP_WAITING')" style="background:#fff;color:#185FA5;border:none;border-radius:6px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">Actualizar</button>`;
-  b.style.cssText='position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#185FA5;color:#fff;padding:10px 16px;border-radius:10px;display:flex;align-items:center;gap:12px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.2);font-size:13px;white-space:nowrap';
-  b.querySelector('button')._sw=sw;
-  document.body.appendChild(b);
-  // Auto-ocultar tras 10s
-  setTimeout(()=>b.remove(),10000);
 }
 
 // Init
