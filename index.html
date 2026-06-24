@@ -1155,12 +1155,12 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <div class="form-row"><label>Cadete</label><select id="p-cadete"></select></div>
     <div class="form-row"><label>Tipo</label>
       <select id="p-tipo">
-        <option value="permiso">Permiso ordinario</option>
-        <option value="baja-medica">Baja médica</option>
-        <option value="rebaje">Rebaje médico</option>
-        <option value="ausencia">Ausencia injustificada</option>
-        <option value="comision">Comisión de servicio</option>
-        <option value="otro">Otro</option>
+        <option value="permiso" data-mode="permiso">Permiso ordinario</option>
+        <option value="comision" data-mode="permiso">Comisión de servicio</option>
+        <option value="baja-medica" data-mode="baja">Baja médica</option>
+        <option value="rebaje" data-mode="baja">Rebaje médico</option>
+        <option value="ausencia" data-mode="baja">Ausencia injustificada</option>
+        <option value="otro" data-mode="baja">Otro</option>
       </select>
     </div>
     <div class="form-grid">
@@ -2020,12 +2020,12 @@ function renderFichaCadet(){
     const permCard=p=>{const t2=PERMISO_TIPO[p.tipo]||PERMISO_TIPO.otro;const activo=p.inicio<=td&&(!p.fin||p.fin>=td);const dias=p.fin?diffDays(p.inicio,p.fin)+1:null;return`<div class="card" style="${activo?'border-left:3px solid '+t2.color+'':''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1">${activo?`<span class="badge badge-green" style="font-size:10px;margin-bottom:4px;display:inline-block">En curso</span>`:''}<div style="font-size:12px;color:var(--text-secondary)">${fmtDateEs(p.inicio)}${p.fin?' → '+fmtDateEs(p.fin):''}${dias?` · ${dias} día${dias!==1?'s':''}`:''}</div>${p.motivo?`<div style="font-size:13px;font-weight:500;margin-top:3px">${p.motivo}</div>`:''}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-icon" onclick="populatePermisoSelect();openPermisoModal(${p.id})"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger" onclick="if(confirm('Eliminar?')){state.permisos=state.permisos.filter(x=>x.id!==${p.id});save();renderFichaCadet();}"><i class="ti ti-trash"></i></button></div></div></div>`;};
     const tiposPermiso=['permiso','comision'];
     const items=perms.filter(p=>tiposPermiso.includes(p.tipo));
-    html=`<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-sm btn-primary" onclick="populatePermisoSelect();openPermisoModal();document.getElementById('p-cadete').value=${c.id};document.getElementById('p-tipo').value='permiso'"><i class="ti ti-plus"></i> Añadir</button></div>
+    html=`<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-sm btn-primary" onclick="populatePermisoSelect();openPermisoModal(null,'permiso');document.getElementById('p-cadete').value=${c.id}"><i class="ti ti-plus"></i> Añadir</button></div>
     ${items.length?items.map(p=>permCard(p)).join(''):`<div class="empty"><i class="ti ti-beach"></i>Sin permisos registrados</div>`}`;
   } else if(_fichaTab==='bajas'){
     const permCard=p=>{const t2=PERMISO_TIPO[p.tipo]||PERMISO_TIPO.otro;const activo=p.inicio<=td&&(!p.fin||p.fin>=td);const dias=p.fin?diffDays(p.inicio,p.fin)+1:null;return`<div class="card" style="${activo?'border-left:3px solid '+t2.color:''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px"><span class="badge ${t2.badge}" style="font-size:10px">${t2.lbl}</span>${activo?`<span class="badge badge-green" style="font-size:10px">En curso</span>`:''}</div><div style="font-size:12px;color:var(--text-secondary)">${fmtDateEs(p.inicio)}${p.fin?' → '+fmtDateEs(p.fin):''}${dias?` · ${dias} día${dias!==1?'s':''}`:''}</div>${p.motivo?`<div style="font-size:13px;font-weight:500;margin-top:3px">${p.motivo}</div>`:''}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-icon" onclick="populatePermisoSelect();openPermisoModal(${p.id})"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger" onclick="if(confirm('Eliminar?')){state.permisos=state.permisos.filter(x=>x.id!==${p.id});save();renderFichaCadet();}"><i class="ti ti-trash"></i></button></div></div></div>`;};
     const bajas=(state.permisos||[]).filter(p=>p.cadetId===c.id&&['baja-medica','rebaje','ausencia','otro'].includes(p.tipo)).sort((a,b)=>b.inicio>a.inicio?1:-1);
-    html=`<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-sm btn-primary" onclick="populatePermisoSelect();openPermisoModal();document.getElementById('p-cadete').value=${c.id};document.getElementById('p-tipo').value='baja-medica'"><i class="ti ti-plus"></i> Añadir</button></div>
+    html=`<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-sm btn-primary" onclick="populatePermisoSelect();openPermisoModal(null,'baja');document.getElementById('p-cadete').value=${c.id}"><i class="ti ti-plus"></i> Añadir</button></div>
     ${bajas.length?bajas.map(p=>permCard(p)).join(''):`<div class="empty"><i class="ti ti-stethoscope"></i>Sin bajas ni rebajes</div>`}`;
   } else if(_fichaTab==='tutorias'){
     const tuts=(state.tutorias||[]).filter(t=>t.cadetId===c.id).sort((a,b)=>b.fecha>a.fecha?1:-1);
@@ -3716,12 +3716,15 @@ function populatePermisoSelect(){
     sel.innerHTML=first+state.cadetes.map(c=>`<option value="${c.id}">${c.nombre}</option>`).join('');
   });
 }
-function openPermisoModal(id){
+function openPermisoModal(id,mode){
   _editingPermisoId=id||null;
   const p=id?state.permisos.find(x=>x.id===id):null;
-  document.getElementById('modal-permiso-title').textContent=p?'Editar permiso':'Nuevo permiso / baja';
+  // Filtrar opciones según modo
+  const m=mode||(p?(['baja-medica','rebaje','ausencia','otro'].includes(p.tipo)?'baja':'permiso'):'permiso');
+  document.querySelectorAll('#p-tipo option').forEach(o=>{o.style.display=o.dataset.mode===m?'':'none';});
+  document.getElementById('modal-permiso-title').textContent=m==='baja'?(p?'Editar baja/rebaje':'Nueva baja / rebaje'):(p?'Editar permiso':'Nuevo permiso');
   document.getElementById('p-cadete').value=p?p.cadetId:'';
-  document.getElementById('p-tipo').value=p?p.tipo:'permiso';
+  document.getElementById('p-tipo').value=p?p.tipo:(m==='baja'?'baja-medica':'permiso');
   document.getElementById('p-inicio').value=p?p.inicio:todayStr();
   document.getElementById('p-fin').value=p?p.fin:'';
   document.getElementById('p-motivo').value=p?p.motivo:'';
