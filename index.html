@@ -2681,6 +2681,23 @@ function doSearch(q){
   const permRes=(state.permisos||[]).filter(p=>{const c=getCadetById(p.cadetId);return(c&&c.nombre.toLowerCase().includes(q))||(p.motivo||'').toLowerCase().includes(q)||(p.tipo||'').toLowerCase().includes(q);});
   if(permRes.length)sections.push({title:'Permisos y bajas',icon:'ti-beach',color:'#BA7517',items:permRes.map(p=>{const c=getCadetById(p.cadetId);const t=PERMISO_TIPO[p.tipo]||PERMISO_TIPO.otro;return{label:c?c.nombre.split(',')[0]:'?',sub:t.lbl+' · '+fmtDateEs(p.inicio),action:`closeSearch();showTab('cadetes');showSubTab('cadetes','permisos')`};})});
 
+  // Navegación por secciones
+  const navItems=[
+    {keys:['inicio','dashboard','inicio'],label:'Inicio',sub:'Pantalla principal',icon:'ti-home',color:'#185FA5',action:`closeSearch();showTab('dashboard')`},
+    {keys:['cadetes','ficha','cadete'],label:'Cadetes',sub:'Fichas de cadetes',icon:'ti-users',color:'#185FA5',action:`closeSearch();showTab('cadetes')`},
+    {keys:['ejercicio','maniobra','instruccion','icon','siae','tiro'],label:'Ejercicios',sub:'Registro de ejercicios',icon:'ti-map-2',color:'#2E8B4A',action:`closeSearch();showTab('ejercicios')`},
+    {keys:['planning','calendario','plan','actividad'],label:'Planning I/A',sub:'Calendario de actividades',icon:'ti-calendar',color:'#2E8B4A',action:`closeSearch();showTab('calendar')`},
+    {keys:['tarea','tareas','mis tareas'],label:'Mis tareas',sub:'Tareas del mando',icon:'ti-checklist',color:'#C47A1E',action:`closeSearch();showTab('mstareas')`},
+    {keys:['permiso','baja','rebaje','medico'],label:'Permisos y bajas',sub:'Permisos y bajas médicas',icon:'ti-beach',color:'#BA7517',action:`closeSearch();showTab('cadetes');showSubTab('cadetes','permisos')`},
+    {keys:['sancion','disciplina','falta'],label:'Sanciones',sub:'Régimen disciplinario',icon:'ti-gavel',color:'#E24B4A',action:`closeSearch();showTab('cadetes');showSubTab('cadetes','sanciones')`},
+    {keys:['servicio','guardia','cuartel'],label:'Servicios',sub:'Registro de servicios',icon:'ti-shield-star',color:'#5f5e5a',action:`closeSearch();showTab('servicios')`},
+    {keys:['documento','archivo','pdf','doc'],label:'Documentos',sub:'Archivos subidos',icon:'ti-file-text',color:'#5f5e5a',action:`closeSearch();showTab('mstareas');showMstSubTab('docs')`},
+    {keys:['nota','academico','asignatura'],label:'Notas académicas',sub:'Calificaciones',icon:'ti-notebook',color:'#6B3FA0',action:`closeSearch();showTab('cadetes');showSubTab('cadetes','notas')`},
+    {keys:['asistencia','falta','presencia'],label:'Asistencia',sub:'Control de asistencia',icon:'ti-calendar-check',color:'#185FA5',action:`closeSearch();showTab('cadetes');showSubTab('cadetes','asistencia')`},
+    {keys:['estadistica','ranking','estadísticas'],label:'Estadísticas',sub:'Rankings y métricas',icon:'ti-chart-bar',color:'#185FA5',action:`closeSearch();showTab('estadisticas')`},
+  ];
+  const navRes=navItems.filter(n=>n.keys.some(k=>k.includes(q)||q.includes(k)));
+  if(navRes.length)sections.push({title:'Ir a',icon:'ti-arrow-right',color:'#5f5e5a',items:navRes.map(n=>({label:n.label,sub:n.sub,action:n.action}))});
   if(!sections.length){el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--text-tertiary);font-size:13px"><i class="ti ti-search-off" style="font-size:24px;display:block;margin-bottom:6px"></i>Sin resultados para "${q}"</div>`;return;}
   el.innerHTML=sections.map(s=>`
     <div style="padding:6px 14px 2px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${s.color}">
