@@ -8,6 +8,7 @@ const STATIC_ASSETS = [
   './manifest.json',
   './logo-ingenieros.jpg',
   './escudo-inf.png',
+  './academia_general_militar.jpg',
   './icon-192.png',
   './icon-512.png',
 ];
