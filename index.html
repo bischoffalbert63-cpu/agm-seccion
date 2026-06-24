@@ -2670,7 +2670,7 @@ function doSearch(q){
   const docRes=(state.documentos||[]).filter(d=>(d.nombre||'').toLowerCase().includes(q)||(d.desc||'').toLowerCase().includes(q)||(d.cat||'').toLowerCase().includes(q));
   if(docRes.length)sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:docRes.map(d=>({
     label:d.nombre,sub:(CAT_LABEL[d.cat]||d.cat||'')+(d.desc?' · '+d.desc:''),
-    action:`closeSearch();docsOpenFromSearch(${d.id})`
+    action:`closeSearch();showTab('mstareas');showMstSubTab('docs');setTimeout(()=>{const el=document.getElementById('doc-item-${d.id}');if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.style.outline='2px solid #185FA5';setTimeout(()=>el.style.outline='',2000);}},300)`
   }))});
   // Planning I/A
   const planRes=(state.planActividades||[]).filter(a=>(a.titulo||'').toLowerCase().includes(q)||(a.obs||'').toLowerCase().includes(q)||(a.tipo||'').toLowerCase().includes(q));
@@ -3339,7 +3339,7 @@ function renderDocs(){
   el.innerHTML=docs.slice().reverse().map(d=>{
     const icon=DOC_ICONS[d.ext]||'ti-file';
     const color=DOC_COLORS[d.ext]||'#888';
-    return`<div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
+    return`<div id="doc-item-${d.id}" class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px">
       <div style="width:40px;height:40px;border-radius:8px;background:${color}18;display:flex;align-items:center;justify-content:center;flex-shrink:0">
         <i class="ti ${icon}" style="font-size:22px;color:${color}"></i>
       </div>
