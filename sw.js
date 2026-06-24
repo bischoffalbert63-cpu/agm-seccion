@@ -1,5 +1,5 @@
-const CACHE_STATIC = 'agm-static-v14';
-const CACHE_DYNAMIC = 'agm-dynamic-v14';
+const CACHE_STATIC = 'agm-static-v15';
+const CACHE_DYNAMIC = 'agm-dynamic-v15';
 
 // Recursos críticos — siempre en caché
 const STATIC_ASSETS = [
