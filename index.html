@@ -1157,6 +1157,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <select id="p-tipo">
         <option value="permiso">Permiso ordinario</option>
         <option value="baja-medica">Baja médica</option>
+        <option value="rebaje">Rebaje médico</option>
         <option value="ausencia">Ausencia injustificada</option>
         <option value="comision">Comisión de servicio</option>
         <option value="otro">Otro</option>
@@ -2017,7 +2018,7 @@ function renderFichaCadet(){
   } else if(_fichaTab==='permisos'){
     const perms=state.permisos.filter(p=>p.cadetId===c.id).sort((a,b)=>b.inicio>a.inicio?1:-1);
     const permCard=p=>{const t2=PERMISO_TIPO[p.tipo]||PERMISO_TIPO.otro;const activo=p.inicio<=td&&(!p.fin||p.fin>=td);const dias=p.fin?diffDays(p.inicio,p.fin)+1:null;return`<div class="card" style="${activo?'border-left:3px solid '+t2.color+'':''}"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><div style="flex:1">${activo?`<span class="badge badge-green" style="font-size:10px;margin-bottom:4px;display:inline-block">En curso</span>`:''}<div style="font-size:12px;color:var(--text-secondary)">${fmtDateEs(p.inicio)}${p.fin?' → '+fmtDateEs(p.fin):''}${dias?` · ${dias} día${dias!==1?'s':''}`:''}</div>${p.motivo?`<div style="font-size:13px;font-weight:500;margin-top:3px">${p.motivo}</div>`:''}</div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-icon" onclick="populatePermisoSelect();openPermisoModal(${p.id})"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-icon btn-danger" onclick="if(confirm('Eliminar?')){state.permisos=state.permisos.filter(x=>x.id!==${p.id});save();renderFichaCadet();}"><i class="ti ti-trash"></i></button></div></div></div>`;};
-    const grupos=[{key:'permiso',label:'Permisos',icon:'ti-beach',tipos:['permiso','comision']},{key:'baja',label:'Bajas médicas',icon:'ti-stethoscope',tipos:['baja-medica']},{key:'ausencia',label:'Ausencias',icon:'ti-user-off',tipos:['ausencia','otro']}];
+    const grupos=[{key:'permiso',label:'Permisos',icon:'ti-beach',tipos:['permiso','comision']},{key:'baja',label:'Bajas médicas / Rebajes',icon:'ti-stethoscope',tipos:['baja-medica','rebaje']},{key:'ausencia',label:'Ausencias',icon:'ti-user-off',tipos:['ausencia','otro']}];
     html=`<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-sm btn-primary" onclick="populatePermisoSelect();openPermisoModal();document.getElementById('p-cadete').value=${c.id}"><i class="ti ti-plus"></i> Añadir</button></div>
     ${grupos.map(g=>{const items=perms.filter(p=>g.tipos.includes(p.tipo));return`<div style="margin-bottom:14px"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-tertiary);margin-bottom:6px;display:flex;align-items:center;gap:5px"><i class="ti ${g.icon}" style="font-size:13px"></i>${g.label} <span style="font-weight:400">(${items.length})</span></div>${items.length?items.map(p=>permCard(p)).join(''):`<div style="font-size:12px;color:var(--text-tertiary);padding:6px 0">Ninguno</div>`}</div>`;}).join('')}`;
   } else if(_fichaTab==='tutorias'){
@@ -3696,6 +3697,7 @@ function renderOrganigrama(){
 // ---- PERMISOS / BAJAS ----
 const PERMISO_TIPO={permiso:{lbl:'Permiso',color:'#185FA5',badge:'badge-blue'},
   'baja-medica':{lbl:'Baja médica',color:'#E24B4A',badge:'badge-red'},
+  rebaje:{lbl:'Rebaje médico',color:'#BA7517',badge:'badge-amber'},
   ausencia:{lbl:'Ausencia',color:'#BA7517',badge:'badge-amber'},
   comision:{lbl:'Comisión',color:'#2E8B4A',badge:'badge-green'},
   otro:{lbl:'Otro',color:'#5f5e5a',badge:'badge-gray'}};
