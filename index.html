@@ -1443,24 +1443,26 @@ function fbSave(){
 
 function fbLoad(){
   if(!_fbReady)return;
-  _fbDb.collection('seccion').doc('datos').get()
-    .then(doc=>{
-      if(!doc.exists)return;
-      const remote=doc.data();
-      const localTs=state._ts||0;
-      const remoteTs=remote._ts||0;
-      if(remoteTs>localTs){
-        Object.assign(state,remote);
-        try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}
-        render();
-        _syncIcon('ok');
+  // Listener en tiempo real — actualiza automáticamente en todos los dispositivos
+  _fbDb.collection('seccion').doc('datos').onSnapshot(doc=>{
+    if(!doc.exists)return;
+    const remote=doc.data();
+    const localTs=state._ts||0;
+    const remoteTs=remote._ts||0;
+    if(remoteTs>localTs){
+      const prevTs=state._ts||0;
+      Object.assign(state,remote);
+      try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}
+      render();
+      _syncIcon('ok');
+      if(prevTs>0){// No mostrar toast en la carga inicial
         const t=document.createElement('div');
-        t.textContent='Datos sincronizados desde la nube';
+        t.textContent='Sincronizado';
         t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#27500A;color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;z-index:9999;white-space:nowrap';
-        document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
-      }else{_syncIcon('ok');}
-    })
-    .catch(e=>{console.warn('Firestore load error:',e);_syncIcon('err');});
+        document.body.appendChild(t);setTimeout(()=>t.remove(),2000);
+      }
+    }else{_syncIcon('ok');}
+  },e=>{console.warn('Firestore listener error:',e);_syncIcon('err');});
 }
 
 function save(){
