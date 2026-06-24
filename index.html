@@ -4032,7 +4032,8 @@ function onEjdFileChange(input){
 // PWA Service Worker
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').then(reg=>{
+    navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'}).then(reg=>{
+      reg.update();// fuerza comprobación inmediata en cada carga
       // Detecta nueva versión disponible
       reg.addEventListener('updatefound',()=>{
         const newSW=reg.installing;
