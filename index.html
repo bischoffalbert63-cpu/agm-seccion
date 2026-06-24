@@ -470,9 +470,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
             <span style="font-size:10px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#2E8B4A;display:inline-block"></span>Actividad I/A</span>
           </div>
         </div>
-        <div class="card" id="cal-day-card">
+        <div class="card" id="cal-day-card" style="display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div style="font-size:13px;font-weight:500" id="cal-selected-label">Selecciona un día</div>
+            <div style="font-size:13px;font-weight:500" id="cal-selected-label"></div>
             <button class="btn btn-sm btn-primary" id="cal-add-plan-btn" style="display:none" onclick="openPlanActividadModal()"><i class="ti ti-plus"></i> Actividad I/A</button>
           </div>
           <div id="cal-day-plan"></div>
@@ -2182,6 +2182,7 @@ function renderCal(){
   if(state.selectedCalDay){
     const dt=new Date(state.selectedCalDay+'T12:00:00');
     document.getElementById('cal-selected-label').textContent=dt.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+    document.getElementById('cal-day-card').style.display='';
     document.getElementById('cal-add-plan-btn').style.display='';
     const dayPlan=state.planActividades.filter(a=>a.fecha===state.selectedCalDay);
     document.getElementById('cal-day-plan').innerHTML=dayPlan.length?dayPlan.map(a=>{
@@ -2216,7 +2217,8 @@ function renderCal(){
   } else {
     document.getElementById('cal-add-plan-btn').style.display='none';
     document.getElementById('cal-day-plan').innerHTML='';
-    document.getElementById('cal-day-tasks').innerHTML=`<div style="font-size:12px;color:var(--text-tertiary)">Selecciona un día</div>`;
+    document.getElementById('cal-day-tasks').innerHTML='';
+    document.getElementById('cal-day-card').style.display='none';
   }
 }
 
