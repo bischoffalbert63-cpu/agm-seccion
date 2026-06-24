@@ -579,8 +579,12 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           <div class="modal" style="max-width:380px">
             <div class="modal-title" id="plan-act-modal-title">Actividad I/A</div>
             <div class="form-row">
-              <label>Fecha</label>
+              <label>Fecha inicio</label>
               <input type="date" id="plan-act-fecha">
+            </div>
+            <div class="form-row">
+              <label>Fecha fin <span style="font-size:11px;color:var(--text-tertiary)">(opcional, para periodos)</span></label>
+              <input type="date" id="plan-act-fecha-fin">
             </div>
             <div class="form-row">
               <label>Título de la actividad</label>
@@ -1372,54 +1376,11 @@ let state={
   agenda:[],
   documentos:[],
   planActividades:[
-    {id:1,fecha:'2026-08-23',titulo:'Incorporación alumnos',tipo:'otro',obs:'4º EMIEO "" Incorporación al centro'},
-    {id:16,fecha:'2026-08-26',titulo:'MANIOBRAS (inicio)',tipo:'maniobras',obs:'4º EMIEO "" Maniobras hasta 6 sep 2026'},
-    {id:17,fecha:'2026-08-27',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:18,fecha:'2026-08-28',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:19,fecha:'2026-08-29',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:20,fecha:'2026-08-30',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:21,fecha:'2026-08-31',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:22,fecha:'2026-09-01',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:23,fecha:'2026-09-02',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:24,fecha:'2026-09-03',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:25,fecha:'2026-09-04',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:26,fecha:'2026-09-05',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:27,fecha:'2026-09-06',titulo:'MANIOBRAS (fin)',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:28,fecha:'2026-11-07',titulo:'MANIOBRAS (inicio)',tipo:'maniobras',obs:'4º EMIEO "" Maniobras hasta 13 nov 2026'},
-    {id:29,fecha:'2026-11-08',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:30,fecha:'2026-11-09',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:31,fecha:'2026-11-10',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:32,fecha:'2026-11-11',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:33,fecha:'2026-11-12',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:34,fecha:'2026-11-13',titulo:'MANIOBRAS (fin)',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:35,fecha:'2027-02-01',titulo:'MANIOBRAS (inicio)',tipo:'maniobras',obs:'4º EMIEO "" Maniobras hasta 14 feb 2027'},
-    {id:36,fecha:'2027-02-02',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:37,fecha:'2027-02-03',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:38,fecha:'2027-02-04',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:39,fecha:'2027-02-05',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:40,fecha:'2027-02-06',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:41,fecha:'2027-02-07',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:42,fecha:'2027-02-08',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:43,fecha:'2027-02-09',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:44,fecha:'2027-02-10',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:45,fecha:'2027-02-11',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:46,fecha:'2027-02-12',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:47,fecha:'2027-02-13',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:48,fecha:'2027-02-14',titulo:'MANIOBRAS (fin)',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:49,fecha:'2027-06-07',titulo:'MANIOBRAS (inicio)',tipo:'maniobras',obs:'4º EMIEO "" Maniobras hasta 20 jun 2027'},
-    {id:50,fecha:'2027-06-08',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:51,fecha:'2027-06-09',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:52,fecha:'2027-06-10',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:53,fecha:'2027-06-11',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:54,fecha:'2027-06-12',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:55,fecha:'2027-06-13',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:56,fecha:'2027-06-14',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:57,fecha:'2027-06-15',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:58,fecha:'2027-06-16',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:59,fecha:'2027-06-17',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:60,fecha:'2027-06-18',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:61,fecha:'2027-06-19',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
-    {id:62,fecha:'2027-06-20',titulo:'MANIOBRAS (fin)',tipo:'maniobras',obs:'4º EMIEO'},
+    {id:1,fecha:'2026-08-23',titulo:'Incorporación alumnos',tipo:'otro',obs:'4º EMIEO — Incorporación al centro'},
+    {id:16,fecha:'2026-08-26',fechaFin:'2026-09-06',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
+    {id:28,fecha:'2026-11-07',fechaFin:'2026-11-13',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
+    {id:35,fecha:'2027-02-01',fechaFin:'2027-02-14',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
+    {id:49,fecha:'2027-06-07',fechaFin:'2027-06-20',titulo:'MANIOBRAS',tipo:'maniobras',obs:'4º EMIEO'},
     {id:2,fecha:'2026-10-02',titulo:'ICON',tipo:'icon',obs:'4º EMIEO "" Resto ESPFUN'},
     {id:3,fecha:'2026-11-27',titulo:'I/A',tipo:'siae',obs:'4º EMIEO'},
     {id:4,fecha:'2026-12-18',titulo:'Examen',tipo:'otro',obs:'4º EMIEO "" Período de exámenes'},
@@ -1438,7 +1399,14 @@ let state={
   activeTab:'dashboard',
   activeSubTab:{cadetes:'ficha',ejercicios:'lista',mstareas:'tareas'},
 };
-(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;if(!state.planActividades||!state.planActividades.length){state.planActividades=state.planActividades||[];}if(!state.permisos)state.permisos=[];if(!state.nextId.permisos)state.nextId.permisos=1;if(!state.tutorias)state.tutorias=[];if(!state.nextId.tutorias)state.nextId.tutorias=1;}}catch(e){}}());
+(function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;if(!state.planActividades||!state.planActividades.length){state.planActividades=state.planActividades||[];}if(!state.permisos)state.permisos=[];if(!state.nextId.permisos)state.nextId.permisos=1;if(!state.tutorias)state.tutorias=[];if(!state.nextId.tutorias)state.nextId.tutorias=1;
+// Migración: eliminar entradas MANIOBRAS día a día (ids 17-27, 29-34, 36-48, 50-62)
+const _idsObsoletos=new Set([17,18,19,20,21,22,23,24,25,26,27,29,30,31,32,33,34,36,37,38,39,40,41,42,43,44,45,46,47,48,50,51,52,53,54,55,56,57,58,59,60,61,62]);
+state.planActividades=state.planActividades.filter(a=>!_idsObsoletos.has(a.id));
+// Asegurar fechaFin en las entradas de maniobras principales
+const _mFins={16:'2026-09-06',28:'2026-11-13',35:'2027-02-14',49:'2027-06-20'};
+state.planActividades.forEach(a=>{if(_mFins[a.id]&&!a.fechaFin)a.fechaFin=_mFins[a.id];});
+}}catch(e){}}());
 // ---- FIREBASE ----
 const _fbConfig={apiKey:"AIzaSyA1KSfaNVrNsPXXGZoHHadUPcchsDBm5DE",authDomain:"agm-seccion.firebaseapp.com",projectId:"agm-seccion",storageBucket:"agm-seccion.firebasestorage.app",messagingSenderId:"1084982496386",appId:"1:1084982496386:web:5bc93f6f23524d91ea789b"};
 let _fbApp=null,_fbDb=null,_fbSt=null,_fbReady=false;
@@ -2258,6 +2226,7 @@ function openPlanActividadModal(id){
   const a=id?state.planActividades.find(x=>x.id===id):null;
   document.getElementById('plan-act-modal-title').textContent=a?'Editar actividad I/A':'Nueva actividad I/A';
   document.getElementById('plan-act-fecha').value=a?a.fecha:(state.selectedCalDay||todayStr());
+  document.getElementById('plan-act-fecha-fin').value=a?a.fechaFin||'':'';
   document.getElementById('plan-act-titulo').value=a?a.titulo:'';
   document.getElementById('plan-act-tipo').value=a?a.tipo:'instruccion';
   document.getElementById('plan-act-obs').value=a?a.obs:'';
@@ -2269,15 +2238,16 @@ function openPlanningVisor(){window.open('planning.pdf','_blank');}
 function closePlanningVisor(){document.getElementById('planning-visor').style.display='none';}
 function savePlanActividad(){
   const fecha=document.getElementById('plan-act-fecha').value;
+  const fechaFin=document.getElementById('plan-act-fecha-fin').value||null;
   const titulo=document.getElementById('plan-act-titulo').value.trim();
   if(!fecha||!titulo){alert('Fecha y título son obligatorios');return;}
   const tipo=document.getElementById('plan-act-tipo').value;
   const obs=document.getElementById('plan-act-obs').value.trim();
   if(_editingPlanId){
     const a=state.planActividades.find(x=>x.id===_editingPlanId);
-    if(a){a.fecha=fecha;a.titulo=titulo;a.tipo=tipo;a.obs=obs;}
+    if(a){a.fecha=fecha;a.fechaFin=fechaFin;a.titulo=titulo;a.tipo=tipo;a.obs=obs;}
   } else {
-    state.planActividades.push({id:state.nextId.planActividades++,fecha,titulo,tipo,obs});
+    state.planActividades.push({id:state.nextId.planActividades++,fecha,fechaFin,titulo,tipo,obs});
   }
   save();closePlanActModal();
   state.selectedCalDay=fecha;
@@ -2298,17 +2268,19 @@ function renderPlanActLista(){
   el.innerHTML=acts.map(a=>{
     const col=PLAN_TIPO_COLOR[a.tipo]||'#5f5e5a';
     const lbl=PLAN_TIPO_LABEL[a.tipo]||a.tipo;
-    const past=a.fecha<td;
+    const past=a.fechaFin?a.fechaFin<td:a.fecha<td;
     const dt=new Date(a.fecha+'T12:00:00');
-    const fmtd=dt.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
-    return`<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border-t);opacity:${past?0.45:1}" onclick="state.calYear=${dt.getFullYear()};state.calMonth=${dt.getMonth()};state.selectedCalDay='${a.fecha}';renderCal();window.scrollTo(0,0)" style="cursor:pointer">
+    const fmtd=dt.toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+    const fmtdFin=a.fechaFin?new Date(a.fechaFin+'T12:00:00').toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'}):dt.toLocaleDateString('es-ES',{day:'numeric',month:'short',year:'numeric'});
+    const rangoStr=a.fechaFin?`${fmtd} — ${fmtdFin}`:fmtdFin;
+    return`<div style="display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border-t);opacity:${past?0.45:1};cursor:pointer" onclick="state.calYear=${dt.getFullYear()};state.calMonth=${dt.getMonth()};state.selectedCalDay='${a.fecha}';renderCal();window.scrollTo(0,0)">
       <div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0;margin-top:4px"></div>
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:600;color:${col}">${lbl}</div>
         <div style="font-size:13px;font-weight:500">${a.titulo}</div>
         ${a.obs?`<div style="font-size:11px;color:var(--text-tertiary)">${a.obs}</div>`:''}
       </div>
-      <div style="font-size:11px;color:var(--text-tertiary);flex-shrink:0;text-align:right">${fmtd}</div>
+      <div style="font-size:11px;color:var(--text-tertiary);flex-shrink:0;text-align:right">${rangoStr}</div>
     </div>`;
   }).join('');
 }
