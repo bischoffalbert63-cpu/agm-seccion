@@ -1794,6 +1794,7 @@ function renderFichaCadet(){
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button class="btn btn-sm btn-icon" style="color:#fff;border-color:rgba(255,255,255,0.3)" onclick="cerrarFichaCadet();setTimeout(()=>editCadete(${c.id}),50)" title="Editar"><i class="ti ti-edit"></i></button>
+        <button class="btn btn-sm btn-icon" style="color:#ffaaaa;border-color:rgba(255,100,100,0.4)" onclick="deleteCadete(${c.id})" title="Eliminar"><i class="ti ti-trash"></i></button>
         <button class="btn btn-sm btn-icon" style="color:#fff;border-color:rgba(255,255,255,0.3)" onclick="openInforme(${c.id})" title="Informe PDF"><i class="ti ti-file-type-pdf"></i></button>
       </div>
     </div>`;
@@ -2320,7 +2321,7 @@ function editCadete(id){
   openModal('modal-cadete');
 }
 function deleteCadete(id){
-  if(!confirm('Â¿Eliminar este cadete y todos sus datos?'))return;
+  if(!confirm('Eliminar este cadete y todos sus datos?'))return;
   state.cadetes=state.cadetes.filter(c=>c.id!==id);
   state.tareasCadetes=state.tareasCadetes.filter(t=>t.cadetId!==id);
   state.notas=state.notas.filter(n=>n.cadetId!==id);
