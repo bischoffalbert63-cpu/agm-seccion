@@ -1624,11 +1624,7 @@ function renderDashboard(){
   const avgEj=allSc.length?allSc.reduce((a,b)=>a+b,0)/allSc.length:0;
   const allN=state.notas.map(n=>n.nota);
   const avgN=allN.length?allN.reduce((a,b)=>a+b,0)/allN.length:0;
-  document.getElementById('dash-metrics').innerHTML=`
-    <div class="metric-card"><div class="metric-label">Cadetes</div><div class="metric-value">${total}</div></div>
-    <div class="metric-card"><div class="metric-label">Tareas pend.</div><div class="metric-value">${tarPend}</div></div>
-    <div class="metric-card"><div class="metric-label">Media ejerc.</div><div class="metric-value">${avgEj.toFixed(1)}</div></div>
-    <div class="metric-card"><div class="metric-label">Media acad.</div><div class="metric-value">${avgN.toFixed(1)}</div></div>`;
+  document.getElementById('dash-metrics').innerHTML='';
   const td=todayStr();
   const pend=state.tareasCadetes.filter(t=>!t.done).slice(0,4);
   document.getElementById('dash-tareas-cadetes').innerHTML=pend.length?pend.map(t=>{
