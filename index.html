@@ -1569,8 +1569,8 @@ function renderAlerts(){
   // Mis tareas vencidas / próximas
   state.misTareas.filter(t=>!t.done&&t.fechaLimite).forEach(t=>{
     const diff=diffDays(td,t.fechaLimite);
-    if(diff<0)alerts.push({type:'danger',icon:'alert-circle',msg:`Tarea vencida: "${t.desc}"`});
-    else if(diff<=parseInt(t.aviso||3))alerts.push({type:'warn',icon:'clock',msg:`Plazo en ${diff} día${diff===1?'':'s'}: "${t.desc}"`});
+    if(diff<0)alerts.push({type:'danger',icon:'alert-circle',msg:`Tarea vencida: "${t.desc}"`,taskType:'mia',taskId:t.id});
+    else if(diff<=parseInt(t.aviso||3))alerts.push({type:'warn',icon:'clock',msg:`Plazo en ${diff} día${diff===1?'':'s'}: "${t.desc}"`,taskType:'mia',taskId:t.id});
   });
 
   // Tareas de cadetes vencidas o próximas
@@ -1578,8 +1578,8 @@ function renderAlerts(){
     const diff=diffDays(td,t.fechaLimite);
     const c=getCadetById(t.cadetId);
     const nombre=c?c.nombre.split(',')[0]:'?';
-    if(diff<0)alerts.push({type:'danger',icon:'alert-circle',msg:`Tarea vencida "" ${nombre}: "${t.tarea}"`});
-    else if(diff<=3)alerts.push({type:'warn',icon:'clock',msg:`Plazo en ${diff===0?'hoy':diff+'d'} "" ${nombre}: "${t.tarea}"`});
+    if(diff<0)alerts.push({type:'danger',icon:'alert-circle',msg:`Tarea vencida — ${nombre}: "${t.tarea}"`,taskType:'cadet',taskId:t.id});
+    else if(diff<=3)alerts.push({type:'warn',icon:'clock',msg:`Plazo en ${diff===0?'hoy':diff+'d'} — ${nombre}: "${t.tarea}"`,taskType:'cadet',taskId:t.id});
   });
 
   // Cadetes sin ningún ejercicio evaluado
@@ -1608,11 +1608,17 @@ function renderAlerts(){
 
   const iconColor={danger:'#E24B4A',warn:'#BA7517',info:'#185FA5',birthday:'#8B3A8B'};
   const bgColor={danger:'#FCEBEB',warn:'#FAEEDA',info:'#E6F1FB',birthday:'#EEEDFE'};
-  const html=alerts.map(a=>`<div class="alert-banner" style="background:${bgColor[a.type]};border-color:${iconColor[a.type]}33;color:${iconColor[a.type]}">
-    <i class="ti ti-${a.icon}" style="font-size:15px;flex-shrink:0"></i>${a.msg}
+  const html=alerts.map(a=>`<div class="alert-banner" style="background:${bgColor[a.type]};border-color:${iconColor[a.type]}33;color:${iconColor[a.type]};display:flex;align-items:center;justify-content:space-between;gap:8px">
+    <span style="display:flex;align-items:center;gap:6px;flex:1"><i class="ti ti-${a.icon}" style="font-size:15px;flex-shrink:0"></i>${a.msg}</span>
+    ${a.taskId?`<button onclick="alertDone('${a.taskType}',${a.taskId})" style="background:none;border:1.5px solid currentColor;border-radius:6px;color:inherit;cursor:pointer;padding:2px 8px;font-size:12px;white-space:nowrap;flex-shrink:0"><i class="ti ti-check"></i> Hecha</button>`:''}
   </div>`).join('');
 
   ['dash-alerts','mst-alerts'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});
+}
+function alertDone(type,id){
+  if(type==='mia'){const t=state.misTareas.find(x=>x.id===id);if(t)t.done=true;}
+  else if(type==='cadet'){const t=state.tareasCadetes.find(x=>x.id===id);if(t)t.done=true;}
+  save();renderAlerts();render();
 }
 function renderDashboard(){
   const total=state.cadetes.length;
