@@ -2671,6 +2671,15 @@ function doSearch(q){
   if(docRes.length)sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:docRes.map(d=>({
     label:d.nombre,sub:d.desc||d.cat||'',action:`closeSearch();showTab('mstareas');showMstSubTab('docs')`
   }))});
+  // Planning I/A
+  const planRes=(state.planActividades||[]).filter(a=>(a.titulo||'').toLowerCase().includes(q)||(a.obs||'').toLowerCase().includes(q)||(a.tipo||'').toLowerCase().includes(q));
+  if(planRes.length)sections.push({title:'Planning I/A',icon:'ti-calendar-event',color:'#2E8B4A',items:planRes.map(a=>({
+    label:a.titulo,sub:(a.fechaFin?fmtDateEs(a.fecha)+' → '+fmtDateEs(a.fechaFin):fmtDateEs(a.fecha))+(a.obs?' · '+a.obs:''),
+    action:`closeSearch();showTab('calendar')`
+  }))});
+  // Permisos y bajas
+  const permRes=(state.permisos||[]).filter(p=>{const c=getCadetById(p.cadetId);return(c&&c.nombre.toLowerCase().includes(q))||(p.motivo||'').toLowerCase().includes(q)||(p.tipo||'').toLowerCase().includes(q);});
+  if(permRes.length)sections.push({title:'Permisos y bajas',icon:'ti-beach',color:'#BA7517',items:permRes.map(p=>{const c=getCadetById(p.cadetId);const t=PERMISO_TIPO[p.tipo]||PERMISO_TIPO.otro;return{label:c?c.nombre.split(',')[0]:'?',sub:t.lbl+' · '+fmtDateEs(p.inicio),action:`closeSearch();showTab('cadetes');showSubTab('cadetes','permisos')`};})});
 
   if(!sections.length){el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--text-tertiary);font-size:13px"><i class="ti ti-search-off" style="font-size:24px;display:block;margin-bottom:6px"></i>Sin resultados para "${q}"</div>`;return;}
   el.innerHTML=sections.map(s=>`
