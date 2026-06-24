@@ -3773,7 +3773,7 @@ function savePermiso(){
     obs:document.getElementById('p-obs').value.trim()};
   if(_editingPermisoId){Object.assign(state.permisos.find(x=>x.id===_editingPermisoId),obj);}
   else{state.permisos.push({id:state.nextId.permisos++,...obj});}
-  save();closeModal('modal-permiso');renderPermisos();renderAlerts();
+  save();closeModal('modal-permiso');renderPermisos();renderAlerts();renderFichaCadet();
 }
 function deletePermiso(){
   if(!_editingPermisoId||!confirm('Â¿Eliminar?'))return;
