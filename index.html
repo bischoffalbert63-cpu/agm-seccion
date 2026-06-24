@@ -2687,7 +2687,7 @@ function doSearch(q){
     {keys:['inicio','dashboard','inicio'],label:'Inicio',sub:'Pantalla principal',icon:'ti-home',color:'#185FA5',action:`closeSearch();showTab('dashboard')`},
     {keys:['cadetes','ficha','cadete'],label:'Cadetes',sub:'Fichas de cadetes',icon:'ti-users',color:'#185FA5',action:`closeSearch();showTab('cadetes')`},
     {keys:['ejercicio','maniobra','instruccion','icon','siae','tiro'],label:'Ejercicios',sub:'Registro de ejercicios',icon:'ti-map-2',color:'#2E8B4A',action:`closeSearch();showTab('ejercicios')`},
-    {keys:['planning','calendario','plan','actividad'],label:'Planning I/A',sub:'Calendario de actividades',icon:'ti-calendar',color:'#2E8B4A',action:`closeSearch();showTab('mstareas')`},
+    {keys:['planning','calendario','plan','actividad'],label:'Planning I/A',sub:'Calendario de actividades',icon:'ti-calendar',color:'#2E8B4A',action:`closeSearch();showTab('mstareas');showMstSubTab('tareas');setTimeout(()=>{const el=document.getElementById('plan-act-lista');if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},300)`},
     {keys:['tarea','tareas','mis tareas'],label:'Mis tareas',sub:'Tareas del mando',icon:'ti-checklist',color:'#C47A1E',action:`closeSearch();showTab('mstareas')`},
     {keys:['permiso','baja','rebaje','medico'],label:'Permisos y bajas',sub:'Permisos y bajas médicas',icon:'ti-beach',color:'#BA7517',action:`closeSearch();showTab('cadetes');showSubTab('cadetes','permisos')`},
     {keys:['sancion','disciplina','falta'],label:'Sanciones',sub:'Régimen disciplinario',icon:'ti-gavel',color:'#E24B4A',action:`closeSearch();showTab('cadetes');showSubTab('cadetes','sanciones')`},
