@@ -13,6 +13,9 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -296,6 +299,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     </div>
     <div class="topbar-right">
       <button class="btn btn-icon" onclick="openSearch()" title="Buscar" style="font-size:20px;color:var(--text-secondary)"><i class="ti ti-search"></i></button>
+      <span id="sync-indicator" title="Sincronización" style="font-size:18px;color:var(--text-tertiary);padding:4px;display:none"><i class="ti ti-cloud-check"></i></span>
       <img src="escudo-inf.png" alt="" style="width:64px;height:64px;object-fit:contain;mix-blend-mode:multiply">
       <span class="topbar-date" id="topbar-date"></span>
       <span class="alert-bell" onclick="showTab('mstareas')" id="alert-bell" title="Alertas">
@@ -1404,7 +1408,66 @@ let state={
   activeSubTab:{cadetes:'ficha',ejercicios:'lista',mstareas:'tareas'},
 };
 (function load(){try{const d=localStorage.getItem('agm_pwa_v1');if(d){const p=JSON.parse(d);Object.assign(state,p);if(!state.nextId.sanciones)state.nextId.sanciones=1;if(!state.nextId.organigramas)state.nextId.organigramas=1;if(!state.organigramas)state.organigramas=[];if(!state.agenda)state.agenda=[];if(!state.agendaDia)state.agendaDia=todayStr();if(!state.agendaVista)state.agendaVista='dia';if(!state.activeSubTab)state.activeSubTab={};if(!state.activeSubTab.mstareas)state.activeSubTab.mstareas='tareas';if(!state.documentos)state.documentos=[];if(!state.nextId.documentos)state.nextId.documentos=1;if(!state.planActividades||!state.planActividades.length){state.planActividades=state.planActividades||[];}if(!state.permisos)state.permisos=[];if(!state.nextId.permisos)state.nextId.permisos=1;}}catch(e){}}());
-function save(){try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}}
+// ---- FIREBASE ----
+const _fbConfig={apiKey:"AIzaSyA1KSfaNVrNsPXXGZoHHadUPcchsDBm5DE",authDomain:"agm-seccion.firebaseapp.com",projectId:"agm-seccion",storageBucket:"agm-seccion.firebasestorage.app",messagingSenderId:"1084982496386",appId:"1:1084982496386:web:5bc93f6f23524d91ea789b"};
+let _fbApp=null,_fbDb=null,_fbSt=null,_fbReady=false;
+try{
+  _fbApp=firebase.initializeApp(_fbConfig);
+  _fbDb=firebase.firestore();
+  _fbSt=firebase.storage();
+  _fbReady=true;
+}catch(e){console.warn('Firebase init error:',e);}
+
+function _syncIcon(state){
+  const el=document.getElementById('sync-indicator');
+  if(!el||!_fbReady)return;
+  el.style.display='';
+  if(state==='syncing'){el.innerHTML='<i class="ti ti-cloud-upload" style="color:#185FA5"></i>';}
+  else if(state==='ok'){el.innerHTML='<i class="ti ti-cloud-check" style="color:#27500A"></i>';setTimeout(()=>{el.innerHTML='<i class="ti ti-cloud-check" style="color:var(--text-tertiary)"></i>';},2000);}
+  else{el.innerHTML='<i class="ti ti-cloud-off" style="color:#791F1F"></i>';}
+}
+
+let _fbSaveTimer=null;
+function fbSave(){
+  if(!_fbReady)return;
+  clearTimeout(_fbSaveTimer);
+  _fbSaveTimer=setTimeout(()=>{
+    _syncIcon('syncing');
+    const data=JSON.parse(JSON.stringify(state));
+    data._ts=Date.now();
+    _fbDb.collection('seccion').doc('datos').set(data)
+      .then(()=>{state._ts=data._ts;_syncIcon('ok');})
+      .catch(e=>{console.warn('Firestore save error:',e);_syncIcon('err');});
+  },800);
+}
+
+function fbLoad(){
+  if(!_fbReady)return;
+  _fbDb.collection('seccion').doc('datos').get()
+    .then(doc=>{
+      if(!doc.exists)return;
+      const remote=doc.data();
+      const localTs=state._ts||0;
+      const remoteTs=remote._ts||0;
+      if(remoteTs>localTs){
+        Object.assign(state,remote);
+        try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}
+        render();
+        _syncIcon('ok');
+        const t=document.createElement('div');
+        t.textContent='Datos sincronizados desde la nube';
+        t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#27500A;color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;z-index:9999;white-space:nowrap';
+        document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+      }else{_syncIcon('ok');}
+    })
+    .catch(e=>{console.warn('Firestore load error:',e);_syncIcon('err');});
+}
+
+function save(){
+  state._ts=state._ts||0;
+  try{localStorage.setItem('agm_pwa_v1',JSON.stringify(state));}catch(e){}
+  fbSave();
+}
 
 function showTab(t){
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
@@ -3833,9 +3896,33 @@ function idbOpen(){
     req.onerror=e=>rej(e);
   });
 }
-function idbSave(id,blob){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put({id,blob});tx.oncomplete=res;tx.onerror=rej;}));}
-function idbGet(id){return idbOpen().then(db=>new Promise((res,rej)=>{const req=db.transaction('files').objectStore('files').get(id);req.onsuccess=()=>res(req.result?.blob);req.onerror=rej;}));}
-function idbDelete(id){return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(id);tx.oncomplete=res;tx.onerror=rej;}));}
+function idbSave(id,blob){
+  // Guardar local (offline) + subir a Firebase Storage
+  const local=idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').put({id,blob});tx.oncomplete=res;tx.onerror=rej;}));
+  if(_fbReady){_fbSt.ref('docs/'+id).put(blob).catch(e=>console.warn('Storage upload:',e));}
+  return local;
+}
+function idbGet(id){
+  return idbOpen().then(db=>new Promise((res,rej)=>{
+    const req=db.transaction('files').objectStore('files').get(id);
+    req.onsuccess=()=>{
+      if(req.result?.blob){res(req.result.blob);}
+      else if(_fbReady){
+        // No está local → descargar de Firebase Storage
+        _fbSt.ref('docs/'+id).getDownloadURL()
+          .then(url=>fetch(url))
+          .then(r=>r.blob())
+          .then(blob=>{idbSave(id,blob);res(blob);})
+          .catch(()=>res(null));
+      }else{res(null);}
+    };
+    req.onerror=()=>res(null);
+  }));
+}
+function idbDelete(id){
+  if(_fbReady){_fbSt.ref('docs/'+id).delete().catch(()=>{});}
+  return idbOpen().then(db=>new Promise((res,rej)=>{const tx=db.transaction('files','readwrite');tx.objectStore('files').delete(id);tx.oncomplete=res;tx.onerror=rej;}));
+}
 
 let _ejdFilePending=null; // {name, type, blob} esperando guardar
 function onEjdFileChange(input){
@@ -3885,6 +3972,7 @@ function showUpdateBanner(sw){
 populateFilterCadete();
 updateFab('dashboard');
 render();
+fbLoad();
 </script>
 </body>
 </html>
