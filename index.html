@@ -2667,7 +2667,7 @@ function doSearch(q){
     label:t.desc,sub:t.cat||'',action:`closeSearch();showTab('mstareas')`
   }))});
   // Documentos
-  const docRes=(state.documentos||[]).filter(d=>(d.nombre||'').toLowerCase().includes(q)||(d.desc||'').toLowerCase().includes(q)||(d.tags||'').toLowerCase().includes(q));
+  const docRes=(state.documentos||[]).filter(d=>(d.nombre||'').toLowerCase().includes(q)||(d.desc||'').toLowerCase().includes(q)||(d.cat||'').toLowerCase().includes(q));
   if(docRes.length)sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:docRes.map(d=>({
     label:d.nombre,sub:d.desc||d.cat||'',action:`closeSearch();showTab('mstareas');showMstSubTab('docs')`
   }))});
