@@ -3321,8 +3321,9 @@ function docsConfirmUpload(){
       docObj.url=url;
       state.documentos.push(docObj);
       save();renderDocs();
-    }).catch(()=>{
-      // Fallback a base64
+    }).catch(err=>{
+      console.error('Firebase Storage error:',err);
+      alert('Error Firebase Storage: '+err.code+' — '+err.message);
       const reader=new FileReader();
       reader.onload=e=>{docObj.datos=e.target.result;state.documentos.push(docObj);save();renderDocs();};
       reader.readAsDataURL(f);
