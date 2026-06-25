@@ -652,6 +652,17 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     </button>
   </div>
 
+<!-- Visor documento (global) -->
+<div id="doc-visor" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1a1a1a;flex-shrink:0">
+    <span id="doc-visor-nombre" style="color:#fff;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"></span>
+    <div style="display:flex;gap:8px;flex-shrink:0;margin-left:10px">
+      <button id="doc-visor-dl" onclick="docsDownloadVisor()" style="background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px"><i class="ti ti-download"></i></button>
+      <button onclick="cerrarDocVisor()" style="background:none;border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:13px"><i class="ti ti-x"></i></button>
+    </div>
+  </div>
+  <iframe id="doc-visor-frame" style="flex:1;border:none;width:100%;background:#fff"></iframe>
+</div>
 <!-- Modal clasificar documento (global) -->
 <div id="modal-doc-cat" class="modal-overlay hidden">
   <div class="modal" style="max-width:340px">
@@ -3331,13 +3342,26 @@ function docsOpenFromSearch(id){
   const w=window.open(url,'_blank');
   if(!w){const a=document.createElement('a');a.href=url;a.download=d.nombre;a.click();}
 }
+let _docVisorUrl=null,_docVisorId=null;
 function docsVer(id){
   const d=state.documentos.find(x=>x.id===id);if(!d)return;
+  _docVisorId=id;
   fetch(d.datos).then(r=>r.blob()).then(blob=>{
-    const url=URL.createObjectURL(blob);
-    window.open(url,'_blank');
-    setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(_docVisorUrl)URL.revokeObjectURL(_docVisorUrl);
+    _docVisorUrl=URL.createObjectURL(blob);
+    document.getElementById('doc-visor-nombre').textContent=d.nombre;
+    document.getElementById('doc-visor-frame').src=_docVisorUrl;
+    const v=document.getElementById('doc-visor');
+    v.style.display='flex';
   });
+}
+function cerrarDocVisor(){
+  document.getElementById('doc-visor').style.display='none';
+  document.getElementById('doc-visor-frame').src='';
+  if(_docVisorUrl){URL.revokeObjectURL(_docVisorUrl);_docVisorUrl=null;}
+}
+function docsDownloadVisor(){
+  if(_docVisorId)docsDownload(_docVisorId);
 }
 function docsDownload(id){
   const doc=state.documentos.find(d=>d.id===id);if(!doc)return;
