@@ -598,8 +598,18 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
             <a id="planning-pdf-btn" href="planning.pdf" target="_blank" class="btn btn-sm btn-primary" style="text-decoration:none"><i class="ti ti-eye"></i> Ver</a>
           </div>
         </div>
-        <input type="file" id="docs-file-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.odt,.ods,.odp"
+        <!-- Zona de subida -->
+        <div class="card" id="docs-dropzone" style="border:2px dashed var(--border-s);background:var(--bg-secondary);text-align:center;padding:2rem 1rem;cursor:pointer"
+          onclick="document.getElementById('docs-file-input').click()"
+          ondragover="event.preventDefault();this.style.borderColor='#185FA5'"
+          ondragleave="this.style.borderColor=''"
+          ondrop="event.preventDefault();this.style.borderColor='';docsHandleFiles(event.dataTransfer.files)">
+          <i class="ti ti-cloud-upload" style="font-size:36px;color:#185FA5;margin-bottom:8px"></i>
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Subir documento</div>
+          <div style="font-size:11px;color:var(--text-tertiary)">PDF, Word, Excel, PowerPoint · Arrastra o haz clic</div>
+          <input type="file" id="docs-file-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.odt,.ods,.odp"
             onchange="docsHandleFiles(this.files)" multiple>
+        </div>
         <!-- Filtro / categoría -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
           <button class="sub-tab active" onclick="docsSetCat('todos')" id="docs-cat-todos">Todos</button>
