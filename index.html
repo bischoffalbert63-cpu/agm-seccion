@@ -3335,12 +3335,7 @@ function docsVer(id){
   const d=state.documentos.find(x=>x.id===id);if(!d)return;
   fetch(d.datos).then(r=>r.blob()).then(blob=>{
     const url=URL.createObjectURL(blob);
-    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if(isMobile){
-      const a=document.createElement('a');a.href=url;a.download=d.nombre;a.click();
-    } else {
-      window.open(url,'_blank');
-    }
+    window.open(url,'_blank');
     setTimeout(()=>URL.revokeObjectURL(url),60000);
   });
 }
@@ -3370,7 +3365,6 @@ function renderDocs(){
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0">
         <button class="btn btn-sm btn-primary" onclick="docsVer(${d.id})" title="Ver"><i class="ti ti-eye"></i> Ver</button>
-        <button class="btn btn-sm btn-icon" onclick="docsDownload(${d.id})" title="Descargar"><i class="ti ti-download"></i></button>
         <button class="btn btn-sm btn-icon btn-danger" onclick="docsDelete(${d.id})" title="Eliminar"><i class="ti ti-trash"></i></button>
       </div>
     </div>`;
