@@ -3363,17 +3363,13 @@ let _docVisorUrl=null,_docVisorId=null;
 function docsVer(id){
   const d=state.documentos.find(x=>x.id===id);if(!d)return;
   _docVisorId=id;
-  if(d.url){
-    window.open(d.url,'_blank');
-    return;
-  }
-  fetch(d.datos).then(r=>r.blob()).then(blob=>{
-    if(_docVisorUrl)URL.revokeObjectURL(_docVisorUrl);
-    _docVisorUrl=URL.createObjectURL(blob);
-    document.getElementById('doc-visor-nombre').textContent=d.nombre;
-    document.getElementById('doc-visor-frame').src=_docVisorUrl;
-    document.getElementById('doc-visor').style.display='flex';
-  });
+  const src=d.url||d.datos;if(!src)return;
+  const a=document.createElement('a');
+  a.href=src;
+  a.download=d.nombre;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 function cerrarDocVisor(){
   document.getElementById('doc-visor').style.display='none';
