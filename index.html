@@ -3349,10 +3349,16 @@ function docsVer(id){
   fetch(d.datos).then(r=>r.blob()).then(blob=>{
     if(_docVisorUrl)URL.revokeObjectURL(_docVisorUrl);
     _docVisorUrl=URL.createObjectURL(blob);
-    document.getElementById('doc-visor-nombre').textContent=d.nombre;
-    document.getElementById('doc-visor-frame').src=_docVisorUrl;
-    const v=document.getElementById('doc-visor');
-    v.style.display='flex';
+    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if(isMobile){
+      // En móvil: descarga directa para que lo abra el lector nativo
+      const a=document.createElement('a');a.href=_docVisorUrl;a.download=d.nombre;a.click();
+      setTimeout(()=>URL.revokeObjectURL(_docVisorUrl),5000);
+    } else {
+      document.getElementById('doc-visor-nombre').textContent=d.nombre;
+      document.getElementById('doc-visor-frame').src=_docVisorUrl;
+      document.getElementById('doc-visor').style.display='flex';
+    }
   });
 }
 function cerrarDocVisor(){
