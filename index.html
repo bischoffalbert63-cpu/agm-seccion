@@ -3333,7 +3333,12 @@ function docsOpenFromSearch(id){
 }
 function docsVer(id){
   const d=state.documentos.find(x=>x.id===id);if(!d)return;
-  window.open(d.datos,'_blank');
+  // Convertir data URL a Blob para que el navegador lo abra
+  fetch(d.datos).then(r=>r.blob()).then(blob=>{
+    const url=URL.createObjectURL(blob);
+    const w=window.open(url,'_blank');
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  });
 }
 function docsDownload(id){
   const doc=state.documentos.find(d=>d.id===id);if(!doc)return;
