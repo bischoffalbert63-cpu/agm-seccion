@@ -1503,6 +1503,8 @@ function fabAction(){
   } else if(t==='mstareas'){
     if(state.activeSubTab.mstareas==='agenda'){state.agendaDia=todayStr();renderAgenda();showMstSubTab('agenda');}
     else{openModal('modal-mitarea');document.getElementById('mt-fcreacion').value=todayStr();}
+  } else if(t==='documentos'){
+    document.getElementById('docs-file-input').click();
   }
 }
 function showSubTab(tab,sub){
