@@ -566,7 +566,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
             <button class="sub-tab active" onclick="docsSetCat('todos')" id="docs-cat-todos">Todos</button>
             <button class="sub-tab" onclick="docsSetCat('planning')" id="docs-cat-planning">Planning I/A</button>
-            <button class="sub-tab" onclick="docsSetCat('ordenes')" id="docs-cat-ordenes">Ã"rdenes</button>
+            <button class="sub-tab" onclick="docsSetCat('ordenes')" id="docs-cat-ordenes">Órdenes</button>
             <button class="sub-tab" onclick="docsSetCat('informes')" id="docs-cat-informes">Informes</button>
             <button class="sub-tab" onclick="docsSetCat('otros')" id="docs-cat-otros">Otros</button>
           </div>
@@ -620,7 +620,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
               <label>Categoría</label>
               <select id="doc-cat-select">
                 <option value="planning">Planning I/A</option>
-                <option value="ordenes">Ã"rdenes</option>
+                <option value="ordenes">Órdenes</option>
                 <option value="informes">Informes</option>
                 <option value="otros">Otros</option>
               </select>
@@ -3332,7 +3332,7 @@ function docsDownload(id){
 }
 const DOC_ICONS={pdf:'ti-file-type-pdf',doc:'ti-file-type-doc',docx:'ti-file-type-doc',xls:'ti-file-type-xls',xlsx:'ti-file-type-xls',ppt:'ti-file-type-ppt',pptx:'ti-file-type-ppt',txt:'ti-file-type-txt',odt:'ti-file-description',ods:'ti-file-spreadsheet',odp:'ti-file-presentation'};
 const DOC_COLORS={pdf:'#C0392B',doc:'#185FA5',docx:'#185FA5',xls:'#2E8B4A',xlsx:'#2E8B4A',ppt:'#C47A1E',pptx:'#C47A1E',txt:'#5f5e5a',odt:'#185FA5',ods:'#2E8B4A',odp:'#C47A1E'};
-const CAT_LABEL={planning:'Planning I/A',ordenes:'Ã"rdenes',informes:'Informes',otros:'Otros'};
+const CAT_LABEL={planning:'Planning I/A',ordenes:'Órdenes',informes:'Informes',otros:'Otros'};
 function fmtSize(b){if(b>1048576)return(b/1048576).toFixed(1)+' MB';if(b>1024)return Math.round(b/1024)+' KB';return b+' B';}
 function renderDocs(){
   const el=document.getElementById('lista-docs');if(!el)return;
