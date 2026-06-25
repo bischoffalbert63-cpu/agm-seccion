@@ -447,7 +447,6 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         <div class="sub-tabs">
           <button class="sub-tab active" onclick="showMstSubTab('tareas')" id="sub-mst-tareas"><i class="ti ti-checklist" style="font-size:13px"></i> Tareas</button>
           <button class="sub-tab" onclick="showMstSubTab('agenda')" id="sub-mst-agenda"><i class="ti ti-notebook" style="font-size:13px"></i> Agenda / Diario</button>
-          <button class="sub-tab" onclick="showMstSubTab('docs')" id="sub-mst-docs"><i class="ti ti-folder" style="font-size:13px"></i> Documentos</button>
         </div>
         <div id="mst-alerts"></div>
         <div id="subtab-mst-tareas">
@@ -533,47 +532,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           </div>
         </div><!-- /subtab-mst-agenda -->
 
-        <div id="subtab-mst-docs" class="hidden">
-          <div class="section-header"><span class="section-title">Documentos de la Sección</span></div>
-          <!-- Visor Planning Anual -->
-          <div class="card" style="padding:12px 14px">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-              <div style="display:flex;align-items:center;gap:8px">
-                <div style="width:36px;height:36px;border-radius:8px;background:#2E8B4A18;display:flex;align-items:center;justify-content:center"><i class="ti ti-calendar-stats" style="font-size:20px;color:#2E8B4A"></i></div>
-                <div>
-                  <div style="font-size:13px;font-weight:600">Planning Anual Curso 26-27</div>
-                  <div style="font-size:11px;color:var(--text-tertiary)">4º EMIEO "" Vista completa del planning</div>
-                </div>
-              </div>
-              <a id="planning-pdf-btn" href="planning.pdf" target="_blank" class="btn btn-sm btn-primary" style="text-decoration:none"><i class="ti ti-eye"></i> Ver</a>
-            </div>
-          </div>
-
-          <!-- Zona de subida -->
-          <div class="card" id="docs-dropzone" style="border:2px dashed var(--border-s);background:var(--bg-secondary);text-align:center;padding:2rem 1rem;cursor:pointer"
-            onclick="document.getElementById('docs-file-input').click()"
-            ondragover="event.preventDefault();this.style.borderColor='#185FA5'"
-            ondragleave="this.style.borderColor=''"
-            ondrop="event.preventDefault();this.style.borderColor='';docsHandleFiles(event.dataTransfer.files)">
-            <i class="ti ti-cloud-upload" style="font-size:36px;color:#185FA5;margin-bottom:8px"></i>
-            <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Subir documento</div>
-            <div style="font-size:11px;color:var(--text-tertiary)">PDF, Word, Excel, PowerPoint · Arrastra o haz clic</div>
-            <input type="file" id="docs-file-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.odt,.ods,.odp"
-              onchange="docsHandleFiles(this.files)" multiple>
-          </div>
-
-          <!-- Filtro / categoría -->
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
-            <button class="sub-tab active" onclick="docsSetCat('todos')" id="docs-cat-todos">Todos</button>
-            <button class="sub-tab" onclick="docsSetCat('nops')" id="docs-cat-nops">NOP's</button>
-            <button class="sub-tab" onclick="docsSetCat('ips')" id="docs-cat-ips">IP's</button>
-            <button class="sub-tab" onclick="docsSetCat('manuales')" id="docs-cat-manuales">Manuales</button>
-            <button class="sub-tab" onclick="docsSetCat('planeamiento')" id="docs-cat-planeamiento">Planeamiento</button>
-            <button class="sub-tab" onclick="docsSetCat('otros')" id="docs-cat-otros">Otros</button>
-          </div>
-
-          <div id="lista-docs"></div>
-        </div><!-- /subtab-mst-docs -->
+        <div id="subtab-mst-docs" class="hidden"></div><!-- /subtab-mst-docs -->
 
         <!-- Modal actividad planning I/A -->
         <div id="modal-plan-act" class="modal-overlay hidden">
@@ -652,6 +611,45 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     </div><!-- /content -->
   </div><!-- /scroll-content -->
 
+      <div id="tab-documentos" class="tab-content">
+        <div class="section-header"><span class="section-title">Documentos de la Sección</span></div>
+        <!-- Visor Planning Anual -->
+        <div class="card" style="padding:12px 14px">
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:36px;height:36px;border-radius:8px;background:#2E8B4A18;display:flex;align-items:center;justify-content:center"><i class="ti ti-calendar-stats" style="font-size:20px;color:#2E8B4A"></i></div>
+              <div>
+                <div style="font-size:13px;font-weight:600">Planning Anual Curso 26-27</div>
+                <div style="font-size:11px;color:var(--text-tertiary)">4º EMIEO — Vista completa del planning</div>
+              </div>
+            </div>
+            <a id="planning-pdf-btn" href="planning.pdf" target="_blank" class="btn btn-sm btn-primary" style="text-decoration:none"><i class="ti ti-eye"></i> Ver</a>
+          </div>
+        </div>
+        <!-- Zona de subida -->
+        <div class="card" id="docs-dropzone" style="border:2px dashed var(--border-s);background:var(--bg-secondary);text-align:center;padding:2rem 1rem;cursor:pointer"
+          onclick="document.getElementById('docs-file-input').click()"
+          ondragover="event.preventDefault();this.style.borderColor='#185FA5'"
+          ondragleave="this.style.borderColor=''"
+          ondrop="event.preventDefault();this.style.borderColor='';docsHandleFiles(event.dataTransfer.files)">
+          <i class="ti ti-cloud-upload" style="font-size:36px;color:#185FA5;margin-bottom:8px"></i>
+          <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Subir documento</div>
+          <div style="font-size:11px;color:var(--text-tertiary)">PDF, Word, Excel, PowerPoint · Arrastra o haz clic</div>
+          <input type="file" id="docs-file-input" style="display:none" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.odt,.ods,.odp"
+            onchange="docsHandleFiles(this.files)" multiple>
+        </div>
+        <!-- Filtro / categoría -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin:10px 0">
+          <button class="sub-tab active" onclick="docsSetCat('todos')" id="docs-cat-todos">Todos</button>
+          <button class="sub-tab" onclick="docsSetCat('nops')" id="docs-cat-nops">NOP's</button>
+          <button class="sub-tab" onclick="docsSetCat('ips')" id="docs-cat-ips">IP's</button>
+          <button class="sub-tab" onclick="docsSetCat('manuales')" id="docs-cat-manuales">Manuales</button>
+          <button class="sub-tab" onclick="docsSetCat('planeamiento')" id="docs-cat-planeamiento">Planeamiento</button>
+          <button class="sub-tab" onclick="docsSetCat('otros')" id="docs-cat-otros">Otros</button>
+        </div>
+        <div id="lista-docs"></div>
+      </div>
+
   <!-- BOTTOM NAV / SIDEBAR -->
   <div class="bottom-nav">
     <div class="sidebar-brand">
@@ -670,6 +668,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
     <button class="bnav-btn" onclick="showTab('mstareas')" id="nav-mstareas">
       <i class="ti ti-checklist"></i><span>Mis tareas</span>
+    </button>
+    <button class="bnav-btn" onclick="showTab('documentos')" id="nav-documentos">
+      <i class="ti ti-folder"></i><span>Documentos</span>
     </button>
     <button class="bnav-btn" onclick="showTab('estadisticas')" id="nav-estadisticas">
       <i class="ti ti-chart-pie"></i><span>Estadísticas</span>
@@ -1484,7 +1485,7 @@ function showTab(t){
 }
 function updateFab(t){
   const fab=document.getElementById('fab-btn');
-  const hidden=['dashboard'];
+  const hidden=['dashboard','estadisticas'];
   fab.style.display=hidden.includes(t)?'none':'flex';
 }
 function fabAction(){
@@ -2669,12 +2670,12 @@ function doSearch(q){
     label:t.desc,sub:t.cat||'',action:`closeSearch();showTab('mstareas')`
   }))});
   // Documento fijo: Planning Anual
-  if('planning anual curso 26-27 4 emieo planning'.includes(q))sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:[{label:'Planning Anual Curso 26-27',sub:'4º EMIEO · PDF',action:`closeSearch();showTab('mstareas');showMstSubTab('docs');setTimeout(()=>{const el=document.getElementById('planning-pdf-btn');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},400)`}]});
+  if('planning anual curso 26-27 4 emieo planning'.includes(q))sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:[{label:'Planning Anual Curso 26-27',sub:'4º EMIEO · PDF',action:`closeSearch();showTab('documentos')`}]});
   // Documentos subidos
   const docRes=(state.documentos||[]).filter(d=>(d.nombre||'').toLowerCase().includes(q)||(d.desc||'').toLowerCase().includes(q)||(d.cat||'').toLowerCase().includes(q));
   if(docRes.length)sections.push({title:'Documentos',icon:'ti-file-text',color:'#5f5e5a',items:docRes.map(d=>({
     label:d.nombre,sub:(CAT_LABEL[d.cat]||d.cat||'')+(d.desc?' · '+d.desc:''),
-    action:`closeSearch();showTab('mstareas');showMstSubTab('docs')`
+    action:`closeSearch();showTab('documentos')`
   }))});
   // Planning I/A
   const planRes=(state.planActividades||[]).filter(a=>(a.titulo||'').toLowerCase().includes(q)||(a.obs||'').toLowerCase().includes(q)||(a.tipo||'').toLowerCase().includes(q));
