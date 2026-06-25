@@ -3315,6 +3315,8 @@ function docsConfirmUpload(){
   const docObj={id,nombre:f.name,ext,cat,desc,fecha:todayStr(),size:f.size,datos:null,url:null};
   document.getElementById('modal-doc-cat').classList.add('hidden');
   // Subir a Firebase Storage si disponible
+  console.log('_fbReady=',_fbReady,'_fbSt=',_fbSt);
+  alert('Firebase listo: '+_fbReady);
   if(_fbReady){
     const ref=_fbSt.ref('documentos/'+id+'_'+f.name);
     ref.put(f).then(()=>ref.getDownloadURL()).then(url=>{
