@@ -3165,7 +3165,17 @@ function saveEjDoc(){
     save();closeModal('modal-ej-doc');renderEjDocs();renderEjercicios();
   };
   if(_ejdFilePending){
-    idbSave(docId,_ejdFilePending.blob).then(doSave);
+    if(_fbReady){
+      const ref=_fbSt.ref('ejercicios/'+docId+'_'+_ejdFilePending.name);
+      ref.put(_ejdFilePending.blob).then(()=>ref.getDownloadURL()).then(url=>{
+        doc.fileUrl=url;
+        idbSave(docId,_ejdFilePending.blob).then(doSave);
+      }).catch(()=>{
+        idbSave(docId,_ejdFilePending.blob).then(doSave);
+      });
+    } else {
+      idbSave(docId,_ejdFilePending.blob).then(doSave);
+    }
   } else {
     doSave();
   }
@@ -3181,6 +3191,23 @@ function noPreview(fileName){return`<div style="background:#fff;border-radius:10
 let _docViewerUrl=null;
 let _docViewerFileName='';
 function abrirEjDocArchivo(docId,fileName,fileType){
+  // Buscar si tiene URL de Firebase
+  let fileUrl=null;
+  state.ejercicios.forEach(e=>{const d=(e.docs||[]).find(x=>x.id===docId);if(d&&d.fileUrl)fileUrl=d.fileUrl;});
+  if(fileUrl){
+    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    _docViewerFileName=fileName||'documento';
+    const overlay=document.getElementById('doc-viewer-overlay');
+    document.getElementById('doc-viewer-title').textContent=fileName||'Documento';
+    const body=document.getElementById('doc-viewer-body');
+    if(isMobile){
+      body.innerHTML=`<iframe src="https://docs.google.com/viewer?url=${encodeURIComponent(fileUrl)}&embedded=true" style="width:min(900px,100%);height:calc(100vh - 80px);border:none;border-radius:6px"></iframe>`;
+    } else {
+      body.innerHTML=`<iframe src="${fileUrl}" style="width:min(900px,100%);height:calc(100vh - 80px);border:none;border-radius:6px"></iframe>`;
+    }
+    overlay.style.display='flex';
+    return;
+  }
   idbGet(docId).then(blob=>{
     if(!blob){alert('Archivo no encontrado en este dispositivo.');return;}
     if(_docViewerUrl)URL.revokeObjectURL(_docViewerUrl);
