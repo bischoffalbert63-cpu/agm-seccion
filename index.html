@@ -3333,10 +3333,14 @@ function docsOpenFromSearch(id){
 }
 function docsVer(id){
   const d=state.documentos.find(x=>x.id===id);if(!d)return;
-  // Convertir data URL a Blob para que el navegador lo abra
   fetch(d.datos).then(r=>r.blob()).then(blob=>{
     const url=URL.createObjectURL(blob);
-    const w=window.open(url,'_blank');
+    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if(isMobile){
+      const a=document.createElement('a');a.href=url;a.download=d.nombre;a.click();
+    } else {
+      window.open(url,'_blank');
+    }
     setTimeout(()=>URL.revokeObjectURL(url),60000);
   });
 }
