@@ -572,31 +572,6 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         </div>
 
         <!-- Modal categoría documento -->
-        <div id="modal-doc-cat" class="modal-overlay hidden">
-          <div class="modal" style="max-width:340px">
-            <div class="modal-title">Clasificar documento</div>
-            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px" id="doc-cat-nombre"></div>
-            <div class="form-row">
-              <label>Categoría</label>
-              <select id="doc-cat-select">
-                <option value="nops">NOP's</option>
-                <option value="ips">IP's</option>
-                <option value="manuales">Manuales de Ingenieros</option>
-                <option value="planeamiento">Planeamiento</option>
-                <option value="otros">Otros</option>
-              </select>
-            </div>
-            <div class="form-row">
-              <label>Descripción (opcional)</label>
-              <input id="doc-cat-desc" placeholder="Ej. Planning anual curso 25-26" autocomplete="off">
-            </div>
-            <div class="modal-actions">
-              <button class="btn" onclick="docsCancelModal()">Cancelar</button>
-              <button class="btn btn-primary" onclick="docsConfirmUpload()">Guardar</button>
-            </div>
-          </div>
-        </div>
-
       </div><!-- /tab-mstareas -->
 
       <!-- ESTADÍSTICAS -->
@@ -677,6 +652,31 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     </button>
   </div>
 
+<!-- Modal clasificar documento (global) -->
+<div id="modal-doc-cat" class="modal-overlay hidden">
+  <div class="modal" style="max-width:340px">
+    <div class="modal-title">Clasificar documento</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:12px" id="doc-cat-nombre"></div>
+    <div class="form-row">
+      <label>Categoría</label>
+      <select id="doc-cat-select">
+        <option value="nops">NOP's</option>
+        <option value="ips">IP's</option>
+        <option value="manuales">Manuales de Ingenieros</option>
+        <option value="planeamiento">Planeamiento</option>
+        <option value="otros">Otros</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Descripción (opcional)</label>
+      <input id="doc-cat-desc" placeholder="Ej. Planning anual curso 25-26" autocomplete="off">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="docsCancelModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="docsConfirmUpload()">Guardar</button>
+    </div>
+  </div>
+</div>
 </div><!-- /app -->
 
 <!-- BÚSQUEDA GLOBAL -->
