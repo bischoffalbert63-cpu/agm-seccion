@@ -3197,8 +3197,13 @@ function abrirEjDocArchivo(docId,fileName,fileType,fileUrl){
     const overlay=document.getElementById('doc-viewer-overlay');
     document.getElementById('doc-viewer-title').textContent=fileName||'Documento';
     const body=document.getElementById('doc-viewer-body');
-    body.innerHTML=`<iframe src="${fileUrl}" style="width:min(900px,100%);height:calc(100vh - 80px);border:none;border-radius:6px"></iframe>`;
-    overlay.style.display='flex';
+    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if(isMobile){
+      window.open(fileUrl,'_blank');
+    } else {
+      body.innerHTML=`<iframe src="${fileUrl}" style="width:min(900px,100%);height:calc(100vh - 80px);border:none;border-radius:6px"></iframe>`;
+      overlay.style.display='flex';
+    }
     return;
   }
   idbGet(docId).then(blob=>{
