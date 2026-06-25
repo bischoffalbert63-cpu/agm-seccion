@@ -3310,17 +3310,31 @@ function docsConfirmUpload(){
   const f=_docsPendingFiles[_docsPendingIdx];
   const cat=document.getElementById('doc-cat-select').value;
   const desc=document.getElementById('doc-cat-desc').value.trim();
-  const reader=new FileReader();
-  reader.onload=function(e){
-    const ext=f.name.split('.').pop().toLowerCase();
-    state.documentos.push({id:state.nextId.documentos++,nombre:f.name,ext,cat,desc,fecha:todayStr(),size:f.size,datos:e.target.result});
-    save();
-    _docsPendingIdx++;
-    document.getElementById('modal-doc-cat').classList.add('hidden');
-    document.getElementById('docs-file-input').value='';
-    if(_docsPendingIdx<_docsPendingFiles.length){docsNextFile();}else{_docsPendingFiles=[];renderDocs();}
-  };
-  reader.readAsDataURL(f);
+  const ext=f.name.split('.').pop().toLowerCase();
+  const id=state.nextId.documentos++;
+  const docObj={id,nombre:f.name,ext,cat,desc,fecha:todayStr(),size:f.size,datos:null,url:null};
+  document.getElementById('modal-doc-cat').classList.add('hidden');
+  // Subir a Firebase Storage si disponible
+  if(_fbReady){
+    const ref=_fbSt.ref('documentos/'+id+'_'+f.name);
+    ref.put(f).then(()=>ref.getDownloadURL()).then(url=>{
+      docObj.url=url;
+      state.documentos.push(docObj);
+      save();renderDocs();
+    }).catch(()=>{
+      // Fallback a base64
+      const reader=new FileReader();
+      reader.onload=e=>{docObj.datos=e.target.result;state.documentos.push(docObj);save();renderDocs();};
+      reader.readAsDataURL(f);
+    });
+  } else {
+    const reader=new FileReader();
+    reader.onload=e=>{docObj.datos=e.target.result;state.documentos.push(docObj);save();renderDocs();};
+    reader.readAsDataURL(f);
+  }
+  _docsPendingIdx++;
+  document.getElementById('docs-file-input').value='';
+  if(_docsPendingIdx<_docsPendingFiles.length){docsNextFile();}else{_docsPendingFiles=[];}
 }
 function docsSetCat(cat){
   docsActiveCat=cat;
@@ -3346,19 +3360,16 @@ let _docVisorUrl=null,_docVisorId=null;
 function docsVer(id){
   const d=state.documentos.find(x=>x.id===id);if(!d)return;
   _docVisorId=id;
+  if(d.url){
+    window.open(d.url,'_blank');
+    return;
+  }
   fetch(d.datos).then(r=>r.blob()).then(blob=>{
     if(_docVisorUrl)URL.revokeObjectURL(_docVisorUrl);
     _docVisorUrl=URL.createObjectURL(blob);
-    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if(isMobile){
-      // En móvil: descarga directa para que lo abra el lector nativo
-      const a=document.createElement('a');a.href=_docVisorUrl;a.download=d.nombre;a.click();
-      setTimeout(()=>URL.revokeObjectURL(_docVisorUrl),5000);
-    } else {
-      document.getElementById('doc-visor-nombre').textContent=d.nombre;
-      document.getElementById('doc-visor-frame').src=_docVisorUrl;
-      document.getElementById('doc-visor').style.display='flex';
-    }
+    document.getElementById('doc-visor-nombre').textContent=d.nombre;
+    document.getElementById('doc-visor-frame').src=_docVisorUrl;
+    document.getElementById('doc-visor').style.display='flex';
   });
 }
 function cerrarDocVisor(){
@@ -3394,7 +3405,7 @@ function renderDocs(){
         ${d.desc?`<div style="font-size:11px;color:var(--text-secondary);margin-top:2px;font-style:italic">${d.desc}</div>`:''}
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn btn-sm btn-primary" onclick="docsVer(${d.id})" title="Ver"><i class="ti ti-eye"></i> Ver</button>
+        <button class="btn btn-sm btn-primary" onclick="docsVer(${d.id})"><i class="ti ti-eye"></i> <span class="doc-ver-lbl">Ver</span></button>
         <button class="btn btn-sm btn-icon btn-danger" onclick="docsDelete(${d.id})" title="Eliminar"><i class="ti ti-trash"></i></button>
       </div>
     </div>`;
