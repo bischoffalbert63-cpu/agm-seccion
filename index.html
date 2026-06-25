@@ -1448,6 +1448,8 @@ function fbSave(){
     _syncIcon('syncing');
     const data=JSON.parse(JSON.stringify(state));
     data._ts=Date.now();
+    // Eliminar base64 antes de guardar en Firestore (límite 1MB)
+    if(data.documentos)data.documentos=data.documentos.map(d=>({...d,datos:null}));
     _fbDb.collection('seccion').doc('datos').set(data)
       .then(()=>{state._ts=data._ts;_syncIcon('ok');})
       .catch(e=>{console.warn('Firestore save error:',e);_syncIcon('err');});
