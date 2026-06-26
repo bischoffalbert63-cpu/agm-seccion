@@ -3652,16 +3652,8 @@ function docsVer(id){
   const d=state.documentos.find(x=>x.id===id);if(!d)return;
   _docVisorId=id;
   if(d.url){
-    const isMobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if(isMobile){
-      // En móvil usar Google Docs Viewer con la URL de Firebase
-      const viewer='https://docs.google.com/viewer?url='+encodeURIComponent(d.url)+'&embedded=true';
-      document.getElementById('doc-visor-nombre').textContent=d.nombre;
-      document.getElementById('doc-visor-frame').src=viewer;
-      document.getElementById('doc-visor').style.display='flex';
-    } else {
-      window.open(d.url,'_blank');
-    }
+    // Firebase Storage URL — abrir directamente (visor nativo del navegador, funciona para cualquier tamaño)
+    window.open(d.url,'_blank');
     return;
   }
   // Fallback base64 — solo PC
