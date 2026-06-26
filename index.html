@@ -1747,7 +1747,12 @@ function renderDashboard(){
     return`<div class="row-item"><div class="row-info"><div class="name" style="font-size:13px">${t.tarea}</div><div class="sub">${c?c.nombre.split(',')[0]:''} · ${fmtDateEs(t.fechaLimite)}${diff!==null?` <span class="chip ${cls}" style="font-size:10px">${diff<0?'Vencida':diff===0?'Hoy':diff+'d'}</span>`:''}</div></div>${priorityBadge(t.prioridad)}</div>`;
   }).join(''):`<div class="empty"><i class="ti ti-circle-check"></i>Sin tareas pendientes</div>`;
   const mtp=state.misTareas.filter(t=>!t.done).sort((a,b)=>(a.fechaLimite||'9999')>(b.fechaLimite||'9999')?1:-1).slice(0,3);
-  document.getElementById('dash-mis-tareas').innerHTML=mtp.length?mtp.map(t=>`<div class="row-item"><div class="row-info"><div class="name" style="font-size:13px">${t.desc}</div><div class="sub">${fmtDateEs(t.fechaLimite)} · ${t.cat}</div></div>${priorityBadge(t.prior)}</div>`).join(''):`<div class="empty"><i class="ti ti-circle-check"></i>Sin tareas pendientes</div>`;
+  document.getElementById('dash-mis-tareas').innerHTML=mtp.length?mtp.map(t=>{
+    const fecha=t.fechaPrevista||t.fechaLimite;
+    const calDay=t.fechaPrevista||t.fechaLimite;
+    const onclick=calDay?`showTab('mstareas');state.selectedCalDay='${calDay}';state.calYear=${calDay.slice(0,4)};state.calMonth=${parseInt(calDay.slice(5,7))-1};renderCal();`:'showTab(\'mstareas\')';
+    return`<div class="row-item" style="cursor:pointer" onclick="${onclick}"><div class="row-info"><div class="name" style="font-size:13px">${t.desc}</div><div class="sub">${fmtDateEs(fecha)} · ${t.cat}</div></div>${priorityBadge(t.prior)}</div>`;
+  }).join(''):`<div class="empty"><i class="ti ti-circle-check"></i>Sin tareas pendientes</div>`;
   renderDashStats();renderRanking();
   document.getElementById('dash-rendimiento').innerHTML=state.cadetes.map((c,i)=>{
     const col=getColor(i);
