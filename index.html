@@ -661,6 +661,19 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   </div>
 
 <!-- Visor documento (global) -->
+<!-- UPLOAD PROGRESS OVERLAY -->
+<div id="upload-progress-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:12px;padding:24px 28px;width:min(320px,90vw);text-align:center">
+    <i class="ti ti-cloud-upload" style="font-size:32px;color:#185FA5;display:block;margin-bottom:12px"></i>
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px">Subiendo archivo...</div>
+    <div id="upload-filename" style="font-size:11px;color:var(--text-secondary);margin-bottom:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+    <div style="background:var(--bg-tertiary);border-radius:20px;height:8px;overflow:hidden;margin-bottom:8px">
+      <div id="upload-bar" style="height:100%;background:#185FA5;border-radius:20px;transition:width 0.3s;width:0%"></div>
+    </div>
+    <div id="upload-pct" style="font-size:12px;color:var(--text-secondary)">0%</div>
+  </div>
+</div>
+
 <div id="doc-visor" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#1a1a1a;flex-shrink:0">
     <span id="doc-visor-nombre" style="color:#fff;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1"></span>
@@ -3568,6 +3581,16 @@ function docsCancelModal(){
   _docsPendingFiles=[];_docsPendingIdx=0;
   document.getElementById('docs-file-input').value='';
 }
+function showUploadProgress(nombre,pct){
+  const ov=document.getElementById('upload-progress-overlay');
+  ov.style.display='flex';
+  document.getElementById('upload-filename').textContent=nombre;
+  document.getElementById('upload-bar').style.width=pct+'%';
+  document.getElementById('upload-pct').textContent=pct+'%';
+}
+function hideUploadProgress(){
+  document.getElementById('upload-progress-overlay').style.display='none';
+}
 function docsConfirmUpload(){
   const f=_docsPendingFiles[_docsPendingIdx];
   const cat=document.getElementById('doc-cat-select').value;
@@ -3578,18 +3601,23 @@ function docsConfirmUpload(){
   document.getElementById('modal-doc-cat').classList.add('hidden');
   // Subir a Firebase Storage si disponible
   if(_fbReady){
+    showUploadProgress(f.name,0);
     const ref=_fbSt.ref('documentos/'+id+'_'+f.name);
-    ref.put(f).then(()=>ref.getDownloadURL()).then(url=>{
-      docObj.url=url;
-      state.documentos.push(docObj);
-      save();renderDocs();
-    }).catch(err=>{
-      console.error('Firebase Storage error:',err);
-      alert('Error Firebase Storage: '+err.code+' — '+err.message);
-      const reader=new FileReader();
-      reader.onload=e=>{docObj.datos=e.target.result;state.documentos.push(docObj);save();renderDocs();};
-      reader.readAsDataURL(f);
-    });
+    const task=ref.put(f);
+    task.on('state_changed',
+      snap=>{const pct=Math.round(snap.bytesTransferred/snap.totalBytes*100);showUploadProgress(f.name,pct);},
+      err=>{
+        hideUploadProgress();
+        console.error('Firebase Storage error:',err);
+        alert('Error subiendo archivo: '+err.code+'\n'+err.message);
+      },
+      ()=>{task.snapshot.ref.getDownloadURL().then(url=>{
+        hideUploadProgress();
+        docObj.url=url;
+        state.documentos.push(docObj);
+        save();renderDocs();
+      });}
+    );
   } else {
     const reader=new FileReader();
     reader.onload=e=>{docObj.datos=e.target.result;state.documentos.push(docObj);save();renderDocs();};
