@@ -662,6 +662,12 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   </div>
 
 <!-- Visor documento (global) -->
+<!-- UPDATE BANNER -->
+<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#185FA5;color:#fff;padding:10px 16px;align-items:center;justify-content:space-between;gap:8px">
+  <span style="font-size:13px;font-weight:500"><i class="ti ti-refresh" style="margin-right:6px"></i>Nueva versión disponible</span>
+  <button onclick="document.getElementById('update-banner').style.display='none';navigator.serviceWorker.getRegistration().then(r=>{if(r&&r.waiting){r.waiting.postMessage({type:'SKIP_WAITING'});}})" style="background:#fff;color:#185FA5;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer">Actualizar</button>
+</div>
+
 <!-- UPLOAD PROGRESS OVERLAY -->
 <div id="upload-progress-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9998;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:12px;padding:24px 28px;width:min(320px,90vw);text-align:center">
@@ -4397,10 +4403,24 @@ function onEjdFileChange(input){
   document.getElementById('ejd-file-name').textContent=f.name+' ('+Math.round(f.size/1024)+' KB)';
 }
 
-// Desregistrar cualquier SW previo para evitar caché obsoleta
+// Registrar SW y detectar actualizaciones
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations().then(regs=>{
-    regs.forEach(r=>r.unregister());
+  navigator.serviceWorker.register('/sw.js').then(reg=>{
+    reg.addEventListener('updatefound',()=>{
+      const nw=reg.installing;
+      nw.addEventListener('statechange',()=>{
+        if(nw.state==='installed'&&navigator.serviceWorker.controller){
+          // Nueva versión disponible — mostrar banner
+          const banner=document.getElementById('update-banner');
+          if(banner)banner.style.display='flex';
+        }
+      });
+    });
+  });
+  // Si el SW toma control (tras actualizar), recargar
+  let refreshing=false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!refreshing){refreshing=true;location.reload();}
   });
 }
 
