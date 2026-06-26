@@ -871,7 +871,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   <div class="modal">
     <div class="modal-drag"></div>
     <div class="modal-header">
-      <span class="modal-title">Asignar tarea</span>
+      <span class="modal-title" id="tc-modal-title">Asignar tarea</span>
       <button class="btn btn-icon" onclick="closeModal('modal-tarea-cadete')"><i class="ti ti-x"></i></button>
     </div>
     <input id="tc-cadete-id" type="hidden">
@@ -1217,7 +1217,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   <div class="modal">
     <div class="modal-drag"></div>
     <div class="modal-header">
-      <span class="modal-title">Nueva tarea</span>
+      <span class="modal-title" id="mt-modal-title">Nueva tarea</span>
       <button class="btn btn-icon" onclick="closeModal('modal-mitarea')"><i class="ti ti-x"></i></button>
     </div>
     <div class="form-row"><label>Descripción</label><input id="mt-desc" placeholder="Ej. Preparar informe mensual" autocomplete="off"></div>
@@ -1515,7 +1515,7 @@ function fabAction(){
   } else if(t==='ejercicios'){openEjercicioModal();
   } else if(t==='mstareas'){
     if(state.activeSubTab.mstareas==='agenda'){state.agendaDia=todayStr();renderAgenda();showMstSubTab('agenda');}
-    else{openModal('modal-mitarea');document.getElementById('mt-fcreacion').value=todayStr();}
+    else{openMiTareaModal();}
   } else if(t==='documentos'){
     document.getElementById('docs-file-input').click();
   }
@@ -1994,7 +1994,7 @@ function renderFichaCadet(){
     const pend=state.tareasCadetes.filter(t=>t.cadetId===c.id&&!t.done);
     const done=state.tareasCadetes.filter(t=>t.cadetId===c.id&&t.done);
     html=`<div class="section-header"><span class="section-title" style="font-size:13px">Tareas</span><button class="btn btn-sm btn-primary" onclick="openTareaCadete(${c.id})"><i class="ti ti-plus"></i> Asignar</button></div>
-    ${pend.length?`<div class="section-sep" style="margin-top:0">Pendientes</div>`+pend.map(t=>{const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;const cls=diff!==null&&diff<0?'chip-danger':diff!==null&&diff<=3?'chip-warn':'';return`<div class="card" style="padding:10px 12px"><div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:500">${t.tarea}</div><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${priorityBadge(t.prioridad)}${t.fechaLimite?`<span class="chip ${cls}" style="font-size:10px">${fmtDateEs(t.fechaLimite)}${diff!==null?` (${diff<0?'vencida':diff===0?'hoy':diff+'d'})`:''}</span>`:''}</div></div><button class="btn btn-sm btn-primary" onclick="openValoracion(${t.id})" style="flex-shrink:0"><i class="ti ti-check"></i></button></div></div>`;}).join(''):''}
+    ${pend.length?`<div class="section-sep" style="margin-top:0">Pendientes</div>`+pend.map(t=>{const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;const cls=diff!==null&&diff<0?'chip-danger':diff!==null&&diff<=3?'chip-warn':'';return`<div class="card" style="padding:10px 12px"><div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><div style="font-size:13px;font-weight:500">${t.tarea}</div><div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">${priorityBadge(t.prioridad)}${t.fechaLimite?`<span class="chip ${cls}" style="font-size:10px">${fmtDateEs(t.fechaLimite)}${diff!==null?` (${diff<0?'vencida':diff===0?'hoy':diff+'d'})`:''}</span>`:''}</div></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-icon" onclick="openTareaCadete(null,${t.id})"><i class="ti ti-edit"></i></button><button class="btn btn-sm btn-primary btn-icon" onclick="openValoracion(${t.id})"><i class="ti ti-check"></i></button></div></div></div>`;}).join(''):''}
     ${done.length?`<div class="section-sep">Completadas</div>`+done.map(t=>`<div class="card" style="padding:10px 12px;opacity:0.75"><div style="font-size:13px;text-decoration:line-through;color:var(--text-secondary)">${t.tarea}</div>${t.valoracion!==undefined&&t.valoracion!==''?`<div style="font-size:12px;color:#3B6D11;margin-top:3px">Valoración: <strong>${parseFloat(t.valoracion).toFixed(1)}</strong>${t.valoracionObs?` · "${t.valoracionObs}"`:''}</div>`:''}</div>`).join(''):''}
     ${!pend.length&&!done.length?`<div class="empty"><i class="ti ti-checklist"></i>Sin tareas asignadas</div>`:''}`;
   } else if(_fichaTab==='sanciones'){
@@ -2155,7 +2155,10 @@ function taskItemMT(t){
         </span>`:''}
       </div>
     </div>
-    <button class="btn btn-sm btn-icon btn-danger" onclick="deleteMiTarea(${t.id})"><i class="ti ti-trash"></i></button>
+    <div style="display:flex;gap:4px">
+      <button class="btn btn-sm btn-icon" onclick="openMiTareaModal(${t.id})"><i class="ti ti-edit"></i></button>
+      <button class="btn btn-sm btn-icon btn-danger" onclick="deleteMiTarea(${t.id})"><i class="ti ti-trash"></i></button>
+    </div>
   </div>`;
 }
 const PLAN_TIPO_LABEL={icon:'ICON',siae:'SIAE',maniobras:'MANIOBRAS',otro:'Otro'};
@@ -2375,10 +2378,29 @@ function saveSancion(){
   save();closeModal('modal-sancion');render();
 }
 function deleteSancion(id){if(!confirm('Â¿Eliminar esta sanción?'))return;state.sanciones=state.sanciones.filter(s=>s.id!==id);save();render();}
-function openTareaCadete(id){const c=getCadetById(id);document.getElementById('tc-cadete-id').value=id;document.getElementById('tc-cadete-nombre').value=c?c.nombre:'';document.getElementById('tc-tarea').value='';document.getElementById('tc-fecha-asig').value=todayStr();document.getElementById('tc-fecha-limite').value='';openModal('modal-tarea-cadete');}
+let _editingTareaCadeteId=null;
+function openTareaCadete(cadetId,tareaId){
+  _editingTareaCadeteId=tareaId||null;
+  const t=tareaId?state.tareasCadetes.find(x=>x.id===tareaId):null;
+  const cId=t?t.cadetId:cadetId;
+  const c=getCadetById(cId);
+  document.getElementById('tc-modal-title').textContent=t?'Editar tarea':'Asignar tarea';
+  document.getElementById('tc-cadete-id').value=cId;
+  document.getElementById('tc-cadete-nombre').value=c?c.nombre:'';
+  document.getElementById('tc-tarea').value=t?t.tarea:'';
+  document.getElementById('tc-fecha-asig').value=t?t.fechaAsig:todayStr();
+  document.getElementById('tc-fecha-limite').value=t?t.fechaLimite||'':'';
+  document.getElementById('tc-prioridad').value=t?t.prioridad:'normal';
+  openModal('modal-tarea-cadete');
+}
 function saveTareaCadete(){
   const tarea=document.getElementById('tc-tarea').value.trim();if(!tarea)return;
-  state.tareasCadetes.push({id:state.nextId.tareasCadetes++,cadetId:parseInt(document.getElementById('tc-cadete-id').value),tarea,fechaAsig:document.getElementById('tc-fecha-asig').value,fechaLimite:document.getElementById('tc-fecha-limite').value,prioridad:document.getElementById('tc-prioridad').value,done:false});
+  if(_editingTareaCadeteId){
+    const t=state.tareasCadetes.find(x=>x.id===_editingTareaCadeteId);
+    if(t){t.tarea=tarea;t.fechaAsig=document.getElementById('tc-fecha-asig').value;t.fechaLimite=document.getElementById('tc-fecha-limite').value;t.prioridad=document.getElementById('tc-prioridad').value;}
+  } else {
+    state.tareasCadetes.push({id:state.nextId.tareasCadetes++,cadetId:parseInt(document.getElementById('tc-cadete-id').value),tarea,fechaAsig:document.getElementById('tc-fecha-asig').value,fechaLimite:document.getElementById('tc-fecha-limite').value,prioridad:document.getElementById('tc-prioridad').value,done:false});
+  }
   save();closeModal('modal-tarea-cadete');render();
 }
 function openValoracion(id){
@@ -3288,13 +3310,32 @@ function renderEjDocs(){
     </div>`;
   }).join('');
 }
+let _editingMiTareaId=null;
+function openMiTareaModal(id){
+  _editingMiTareaId=id||null;
+  const t=id?state.misTareas.find(x=>x.id===id):null;
+  document.getElementById('mt-modal-title').textContent=t?'Editar tarea':'Nueva tarea';
+  document.getElementById('mt-desc').value=t?t.desc:'';
+  document.getElementById('mt-fcreacion').value=t?t.fechaCreacion:todayStr();
+  document.getElementById('mt-fprevista').value=t?t.fechaPrevista||'':'';
+  document.getElementById('mt-flimite').value=t?t.fechaLimite||'':'';
+  document.getElementById('mt-aviso').value=t?String(t.aviso||3):'3';
+  document.getElementById('mt-prior').value=t?t.prior:'normal';
+  document.getElementById('mt-cat').value=t?t.cat:'Instrucción';
+  openModal('modal-mitarea');
+}
 function saveMiTarea(){
   const desc=document.getElementById('mt-desc').value.trim();if(!desc)return;
-  state.misTareas.push({id:state.nextId.misTareas++,desc,fechaCreacion:document.getElementById('mt-fcreacion').value||todayStr(),fechaPrevista:document.getElementById('mt-fprevista').value,fechaLimite:document.getElementById('mt-flimite').value,aviso:parseInt(document.getElementById('mt-aviso').value)||3,prior:document.getElementById('mt-prior').value,cat:document.getElementById('mt-cat').value,done:false});
+  if(_editingMiTareaId){
+    const t=state.misTareas.find(x=>x.id===_editingMiTareaId);
+    if(t){t.desc=desc;t.fechaCreacion=document.getElementById('mt-fcreacion').value||todayStr();t.fechaPrevista=document.getElementById('mt-fprevista').value;t.fechaLimite=document.getElementById('mt-flimite').value;t.aviso=parseInt(document.getElementById('mt-aviso').value)||3;t.prior=document.getElementById('mt-prior').value;t.cat=document.getElementById('mt-cat').value;}
+  } else {
+    state.misTareas.push({id:state.nextId.misTareas++,desc,fechaCreacion:document.getElementById('mt-fcreacion').value||todayStr(),fechaPrevista:document.getElementById('mt-fprevista').value,fechaLimite:document.getElementById('mt-flimite').value,aviso:parseInt(document.getElementById('mt-aviso').value)||3,prior:document.getElementById('mt-prior').value,cat:document.getElementById('mt-cat').value,done:false});
+  }
   save();closeModal('modal-mitarea');render();
 }
 function toggleMiTarea(id){const t=state.misTareas.find(x=>x.id===id);if(t)t.done=!t.done;save();render();}
-function deleteMiTarea(id){if(!confirm('Â¿Eliminar?'))return;state.misTareas=state.misTareas.filter(t=>t.id!==id);save();render();}
+function deleteMiTarea(id){if(!confirm('¿Eliminar?'))return;state.misTareas=state.misTareas.filter(t=>t.id!==id);save();render();}
 
 // ---- AGENDA / DIARIO ----
 function showMstSubTab(sub){
