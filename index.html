@@ -1605,6 +1605,7 @@ function showTab(t){
   document.getElementById('tab-'+t).classList.add('active');
   document.getElementById('nav-'+t).classList.add('active');
   state.activeTab=t;
+  if(t==='mstareas'){const now=new Date();state.calYear=now.getFullYear();state.calMonth=now.getMonth();state.selectedCalDay=null;}
   document.getElementById('scroll-content').scrollTo(0,0);
   updateFab(t);
   render();
