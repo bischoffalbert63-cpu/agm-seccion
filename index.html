@@ -516,10 +516,8 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
                 </div>
                 <button class="btn btn-sm btn-icon" onclick="agendaNext()"><i class="ti ti-chevron-right"></i></button>
               </div>
-              <div class="form-row" style="margin-bottom:8px">
-                <textarea id="agenda-texto" placeholder="Anotaciones del día: reuniones, decisiones, recordatorios, órdenes recibidas..." style="min-height:200px;font-size:14px;line-height:1.6" oninput="agendaAutoSave()"></textarea>
-              </div>
-              <div style="display:flex;align-items:center;justify-content:space-between">
+              <div id="agenda-horas-table" style="border:1px solid var(--border-t);border-radius:8px;overflow:hidden"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
                 <span style="font-size:11px;color:var(--text-tertiary)" id="agenda-saved-lbl"></span>
                 <button class="btn btn-sm btn-primary" onclick="agendaSave()"><i class="ti ti-check"></i> Guardar</button>
               </div>
@@ -3863,20 +3861,25 @@ function agendaAutoSave(){
   clearTimeout(_agendaSaveTimer);
   _agendaSaveTimer=setTimeout(()=>agendaSave(true),1500);
 }
+const AGENDA_HORAS=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'];
 function agendaSave(auto){
-  const texto=document.getElementById('agenda-texto')?.value||'';
   const dia=state.agendaDia;
+  const horas={};
+  AGENDA_HORAS.forEach(h=>{
+    const inp=document.getElementById('agenda-h-'+h.replace(':',''));
+    if(inp&&inp.value.trim())horas[h]=inp.value.trim();
+  });
   const idx=state.agenda.findIndex(a=>a.fecha===dia);
-  if(texto.trim()){
-    if(idx>=0)state.agenda[idx].texto=texto;
-    else state.agenda.push({fecha:dia,texto});
+  if(Object.keys(horas).length){
+    if(idx>=0){state.agenda[idx].horas=horas;state.agenda[idx].texto=Object.entries(horas).map(([h,v])=>`${h}: ${v}`).join('\n');}
+    else state.agenda.push({fecha:dia,horas,texto:Object.entries(horas).map(([h,v])=>`${h}: ${v}`).join('\n')});
   } else {
     if(idx>=0)state.agenda.splice(idx,1);
   }
   state.agenda.sort((a,b)=>b.fecha>a.fecha?1:-1);
   save();
   const lbl=document.getElementById('agenda-saved-lbl');
-  if(lbl)lbl.textContent=auto?'Guardado automáticamente':'Guardado âœ"';
+  if(lbl)lbl.textContent=auto?'Guardado automáticamente':'Guardado ✓';
   renderAgendaHistorial();
 }
 function renderAgenda(){
@@ -3886,11 +3889,23 @@ function renderAgenda(){
   const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
   const lbl=document.getElementById('agenda-day-label');
   const sub=document.getElementById('agenda-day-sub');
-  const txt=document.getElementById('agenda-texto');
   if(lbl)lbl.textContent=`${dias[dt.getDay()]} ${dt.getDate()} de ${meses[dt.getMonth()]}`;
-  if(sub)sub.textContent=dt.getFullYear()+(dia===todayStr()?' "" Hoy':'');
+  if(sub)sub.textContent=dt.getFullYear()+(dia===todayStr()?' · Hoy':'');
   const entry=state.agenda.find(a=>a.fecha===dia);
-  if(txt)txt.value=entry?entry.texto:'';
+  const horas=entry?.horas||{};
+  const tabla=document.getElementById('agenda-horas-table');
+  if(tabla){
+    tabla.innerHTML=`
+      <div style="display:grid;grid-template-columns:64px 1fr;background:var(--bg-secondary);border-bottom:1px solid var(--border-t)">
+        <div style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-tertiary)">Hora</div>
+        <div style="padding:6px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text-tertiary)">Apuntes</div>
+      </div>
+      ${AGENDA_HORAS.map((h,i)=>`
+        <div style="display:grid;grid-template-columns:64px 1fr;border-bottom:${i<AGENDA_HORAS.length-1?'1px solid var(--border-t)':'none'}">
+          <div style="padding:8px 10px;font-size:13px;font-weight:600;color:var(--text-secondary);border-right:1px solid var(--border-t);display:flex;align-items:center">${h}</div>
+          <input id="agenda-h-${h.replace(':','')}" value="${horas[h]||''}" placeholder="..." style="border:none;background:transparent;padding:8px 10px;font-size:13px;color:var(--text-primary);outline:none;width:100%;box-sizing:border-box" oninput="agendaAutoSave()">
+        </div>`).join('')}`;
+  }
   const savedLbl=document.getElementById('agenda-saved-lbl');
   if(savedLbl)savedLbl.textContent='';
   renderAgendaHistorial();
