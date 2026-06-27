@@ -1391,7 +1391,6 @@ function initNotifications(){
   }
   setInterval(checkReminders,60000);
   checkReminders();
-  setTimeout(()=>showInAppReminder('⏰','Tarea próxima','Instrucción de orden cerrado','09:00 – 10:30','Instrucción · Prioridad: alta · Límite: 27/06/2026','#185FA5'),3000);
 }
 let _audioCtx=null;
 function initAudioCtx(){
@@ -1436,64 +1435,97 @@ function showInAppReminder(icon,tipo,nombre,hora,extra,color){
   banner.appendChild(el);
   banner.style.display='flex';
 }
+function dayBefore(iso){const d=new Date(iso+'T12:00:00');d.setDate(d.getDate()-1);return d.toISOString().slice(0,10);}
 function checkReminders(){
   const now=new Date();
   const td=todayStr();
   const hhmm=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
 
-  // Tareas con hora (avisa 15 min antes)
-  (state.misTareas||[]).filter(t=>!t.done&&t.horaInicio&&(t.fechaLimite===td||t.fechaPrevista===td)).forEach(t=>{
-    const key='mt_'+t.id+'_'+t.horaInicio;
-    if(_notifSent.has(key))return;
-    const [h,m]=t.horaInicio.split(':').map(Number);
-    const taskTime=new Date();taskTime.setHours(h,m,0,0);
-    const diffMin=(taskTime-now)/60000;
-    if(diffMin>=-2&&diffMin<=15){
-      _notifSent.add(key);
-      const hora=t.horaInicio+(t.horaFin?' – '+t.horaFin:'');
-      const extra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:'',t.fechaLimite?'Límite: '+fmtFecha(t.fechaLimite):''].filter(Boolean).join(' · ');
-      showInAppReminder('⏰','Tarea próxima',t.desc,hora,extra,'#185FA5');
-      if('Notification' in window&&Notification.permission==='granted')
-        new Notification('⏰ Tarea próxima',{body:`${t.horaInicio} – ${t.desc}`,icon:'icon-192.png'});
+  // ── TAREAS ──
+  (state.misTareas||[]).filter(t=>!t.done).forEach(t=>{
+    const dia=t.fechaPrevista||t.fechaLimite;
+    if(!dia)return;
+
+    // Aviso día anterior a las 20:00
+    if(dayBefore(dia)===td){
+      const key='mt_prev_'+t.id;
+      if(!_notifSent.has(key)&&hhmm>='20:00'&&hhmm<='20:05'){
+        _notifSent.add(key);
+        const extra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:''].filter(Boolean).join(' · ');
+        showInAppReminder('🔔','Tarea mañana',t.desc,t.horaInicio?t.horaInicio+' · '+fmtFecha(dia):fmtFecha(dia),extra,'#185FA5');
+        if('Notification' in window&&Notification.permission==='granted')
+          new Notification('🔔 Tarea mañana',{body:t.desc,icon:'icon-192.png'});
+      }
+    }
+
+    // Aviso mismo día: 30 min antes (si tiene hora) o a las 08:00
+    if(dia===td){
+      if(t.horaInicio){
+        const key='mt_30_'+t.id;
+        if(!_notifSent.has(key)){
+          const [h,m]=t.horaInicio.split(':').map(Number);
+          const taskTime=new Date();taskTime.setHours(h,m,0,0);
+          const diffMin=(taskTime-now)/60000;
+          if(diffMin>=28&&diffMin<=32){
+            _notifSent.add(key);
+            const hora=t.horaInicio+(t.horaFin?' – '+t.horaFin:'');
+            const extra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:''].filter(Boolean).join(' · ');
+            showInAppReminder('⏰','Tarea en 30 min',t.desc,hora,extra,'#185FA5');
+            if('Notification' in window&&Notification.permission==='granted')
+              new Notification('⏰ Tarea en 30 min',{body:`${t.horaInicio} – ${t.desc}`,icon:'icon-192.png'});
+          }
+        }
+      } else {
+        const key='mt_hoy_'+t.id;
+        if(!_notifSent.has(key)&&hhmm>='08:00'&&hhmm<='08:05'){
+          _notifSent.add(key);
+          const extra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:''].filter(Boolean).join(' · ');
+          showInAppReminder('📋','Tarea hoy',t.desc,fmtFecha(dia),extra,'#185FA5');
+          if('Notification' in window&&Notification.permission==='granted')
+            new Notification('📋 Tarea hoy',{body:t.desc,icon:'icon-192.png'});
+        }
+      }
     }
   });
 
-  // Eventos con hora (avisa 15 min antes)
-  (state.eventos||[]).filter(e=>e.fechaIni===td&&e.horaIni).forEach(e=>{
-    const key='ev_'+e.id+'_'+e.horaIni;
-    if(_notifSent.has(key))return;
-    const [h,m]=e.horaIni.split(':').map(Number);
-    const evTime=new Date();evTime.setHours(h,m,0,0);
-    const diffMin=(evTime-now)/60000;
-    if(diffMin>=-2&&diffMin<=15){
-      _notifSent.add(key);
-      const ehora=e.horaIni+(e.horaFin?' – '+e.horaFin:'');
-      showInAppReminder('📅','Evento próximo',e.titulo,ehora,e.desc||'','#8E44AD');
-      if('Notification' in window&&Notification.permission==='granted')
-        new Notification('📅 Evento próximo',{body:`${e.horaIni} – ${e.titulo}`,icon:'icon-192.png'});
+  // ── EVENTOS ──
+  (state.eventos||[]).forEach(e=>{
+    // Aviso día anterior a las 20:00
+    if(dayBefore(e.fechaIni)===td){
+      const key='ev_prev_'+e.id;
+      if(!_notifSent.has(key)&&hhmm>='20:00'&&hhmm<='20:05'){
+        _notifSent.add(key);
+        showInAppReminder('🔔','Evento mañana',e.titulo,e.horaIni?e.horaIni+' · '+fmtFecha(e.fechaIni):fmtFecha(e.fechaIni),e.desc||'','#8E44AD');
+        if('Notification' in window&&Notification.permission==='granted')
+          new Notification('🔔 Evento mañana',{body:e.titulo,icon:'icon-192.png'});
+      }
     }
-  });
 
-  // Tareas sin hora que vencen hoy — aviso a las 8:00
-  (state.misTareas||[]).filter(t=>!t.done&&!t.horaInicio&&t.fechaLimite===td).forEach(t=>{
-    const key='mt_hoy_'+t.id;
-    if(_notifSent.has(key))return;
-    if(hhmm>='08:00'&&hhmm<='08:05'){
-      _notifSent.add(key);
-      const textra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:''].filter(Boolean).join(' · ');
-      showInAppReminder('📋','Tarea vence hoy',t.desc,fmtFecha(t.fechaLimite),textra,'#185FA5');
-      if('Notification' in window&&Notification.permission==='granted')
-        new Notification('📋 Tarea vence hoy',{body:t.desc,icon:'icon-192.png'});
-    }
-  });
-
-  // Tareas sin hora pero que vencen hoy
-  (state.misTareas||[]).filter(t=>!t.done&&!t.horaInicio&&t.fechaLimite===td).forEach(t=>{
-    const key='mt_hoy_'+t.id;
-    if(_notifSent.has(key))return;
-    if(hhmm>='08:00'&&hhmm<='08:05'){
-      _notifSent.add(key);
-      new Notification('📋 Tarea vence hoy',{body:t.desc,icon:'icon-192.png'});
+    // Aviso mismo día: 30 min antes (si tiene hora) o a las 08:00
+    if(e.fechaIni===td){
+      if(e.horaIni){
+        const key='ev_30_'+e.id;
+        if(!_notifSent.has(key)){
+          const [h,m]=e.horaIni.split(':').map(Number);
+          const evTime=new Date();evTime.setHours(h,m,0,0);
+          const diffMin=(evTime-now)/60000;
+          if(diffMin>=28&&diffMin<=32){
+            _notifSent.add(key);
+            const ehora=e.horaIni+(e.horaFin?' – '+e.horaFin:'');
+            showInAppReminder('📅','Evento en 30 min',e.titulo,ehora,e.desc||'','#8E44AD');
+            if('Notification' in window&&Notification.permission==='granted')
+              new Notification('📅 Evento en 30 min',{body:`${e.horaIni} – ${e.titulo}`,icon:'icon-192.png'});
+          }
+        }
+      } else {
+        const key='ev_hoy_'+e.id;
+        if(!_notifSent.has(key)&&hhmm>='08:00'&&hhmm<='08:05'){
+          _notifSent.add(key);
+          showInAppReminder('📅','Evento hoy',e.titulo,fmtFecha(e.fechaIni),e.desc||'','#8E44AD');
+          if('Notification' in window&&Notification.permission==='granted')
+            new Notification('📅 Evento hoy',{body:e.titulo,icon:'icon-192.png'});
+        }
+      }
     }
   });
 }
