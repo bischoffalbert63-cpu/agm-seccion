@@ -1280,6 +1280,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <div class="form-row"><label>Hora inicio</label><input id="mt-hora-inicio" type="time"></div>
       <div class="form-row"><label>Hora fin</label><input id="mt-hora-fin" type="time"></div>
     </div>
+    <div class="form-row"><label>Lugar</label><input id="mt-lugar" placeholder="Lugar de la tarea" autocomplete="off"></div>
     <div class="form-grid">
       <div class="form-row"><label>Aviso (días antes)</label>
         <select id="mt-aviso"><option value="1">1 día</option><option value="2">2 días</option><option value="3" selected>3 días</option><option value="5">5 días</option><option value="7">7 días</option></select>
@@ -1314,6 +1315,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <div class="form-row"><label>Fecha fin</label><input id="ev-fecha-fin" type="date"></div>
       <div class="form-row"><label>Hora fin</label><input id="ev-hora-fin" type="time"></div>
     </div>
+    <div class="form-row"><label>Lugar</label><input id="ev-lugar" placeholder="Lugar del evento" autocomplete="off"></div>
     <input type="hidden" id="ev-color" value="#8E44AD">
     <div id="ev-del-btn" style="display:none;margin-bottom:6px">
       <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="deleteEvento()"><i class="ti ti-trash"></i> Eliminar evento</button>
@@ -2622,7 +2624,8 @@ function openEventoModal(id){
   document.getElementById('ev-hora-ini').value=e?e.horaIni||'':'';
   document.getElementById('ev-fecha-fin').value=e?e.fechaFin||'':'';
   document.getElementById('ev-hora-fin').value=e?e.horaFin||'':'';
-  document.getElementById('ev-color').value=e?e.color:'#185FA5';
+  document.getElementById('ev-lugar').value=e?e.lugar||'':'';
+  document.getElementById('ev-color').value=e?e.color:'#8E44AD';
   document.getElementById('ev-del-btn').style.display=e?'':'none';
   openModal('modal-evento');
 }
@@ -2630,7 +2633,7 @@ function saveEvento(){
   const titulo=document.getElementById('ev-titulo').value.trim();
   const fechaIni=document.getElementById('ev-fecha-ini').value;
   if(!titulo||!fechaIni){alert('Título y fecha de inicio son obligatorios');return;}
-  const obj={titulo,desc:document.getElementById('ev-desc').value.trim(),fechaIni,horaIni:document.getElementById('ev-hora-ini').value,fechaFin:document.getElementById('ev-fecha-fin').value||fechaIni,horaFin:document.getElementById('ev-hora-fin').value,color:document.getElementById('ev-color').value};
+  const obj={titulo,desc:document.getElementById('ev-desc').value.trim(),fechaIni,horaIni:document.getElementById('ev-hora-ini').value,fechaFin:document.getElementById('ev-fecha-fin').value||fechaIni,horaFin:document.getElementById('ev-hora-fin').value,lugar:document.getElementById('ev-lugar').value.trim(),color:document.getElementById('ev-color').value};
   if(_editingEventoId){
     const e=(state.eventos||[]).find(x=>x.id===_editingEventoId);
     if(e)Object.assign(e,obj);
@@ -3666,17 +3669,19 @@ function openMiTareaModal(id){
   document.getElementById('mt-cat').value=t?t.cat:'Instrucción';
   document.getElementById('mt-hora-inicio').value=t?t.horaInicio||'':'';
   document.getElementById('mt-hora-fin').value=t?t.horaFin||'':'';
+  document.getElementById('mt-lugar').value=t?t.lugar||'':'';
   openModal('modal-mitarea');
 }
 function saveMiTarea(){
   const desc=document.getElementById('mt-desc').value.trim();if(!desc)return;
   const horaInicio=document.getElementById('mt-hora-inicio').value;
   const horaFin=document.getElementById('mt-hora-fin').value;
+  const lugar=document.getElementById('mt-lugar').value.trim();
   if(_editingMiTareaId){
     const t=state.misTareas.find(x=>x.id===_editingMiTareaId);
-    if(t){t.desc=desc;t.fechaCreacion=document.getElementById('mt-fcreacion').value||todayStr();t.fechaPrevista=document.getElementById('mt-fprevista').value;t.fechaLimite=document.getElementById('mt-flimite').value;t.aviso=parseInt(document.getElementById('mt-aviso').value)||3;t.prior=document.getElementById('mt-prior').value;t.cat=document.getElementById('mt-cat').value;t.horaInicio=horaInicio;t.horaFin=horaFin;}
+    if(t){t.desc=desc;t.fechaCreacion=document.getElementById('mt-fcreacion').value||todayStr();t.fechaPrevista=document.getElementById('mt-fprevista').value;t.fechaLimite=document.getElementById('mt-flimite').value;t.aviso=parseInt(document.getElementById('mt-aviso').value)||3;t.prior=document.getElementById('mt-prior').value;t.cat=document.getElementById('mt-cat').value;t.horaInicio=horaInicio;t.horaFin=horaFin;t.lugar=lugar;}
   } else {
-    state.misTareas.push({id:state.nextId.misTareas++,desc,fechaCreacion:document.getElementById('mt-fcreacion').value||todayStr(),fechaPrevista:document.getElementById('mt-fprevista').value,fechaLimite:document.getElementById('mt-flimite').value,aviso:parseInt(document.getElementById('mt-aviso').value)||3,prior:document.getElementById('mt-prior').value,cat:document.getElementById('mt-cat').value,horaInicio,horaFin,done:false});
+    state.misTareas.push({id:state.nextId.misTareas++,desc,fechaCreacion:document.getElementById('mt-fcreacion').value||todayStr(),fechaPrevista:document.getElementById('mt-fprevista').value,fechaLimite:document.getElementById('mt-flimite').value,aviso:parseInt(document.getElementById('mt-aviso').value)||3,prior:document.getElementById('mt-prior').value,cat:document.getElementById('mt-cat').value,horaInicio,horaFin,lugar,done:false});
   }
   save();closeModal('modal-mitarea');render();
 }
