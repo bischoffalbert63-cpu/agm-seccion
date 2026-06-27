@@ -1387,6 +1387,11 @@ function initNotifications(){
   if('Notification' in window&&Notification.permission==='default'){
     Notification.requestPermission();
   }
+  // Evento de prueba — se elimina automáticamente después de disparar
+  if(!(state.eventos||[]).find(e=>e.id===9999)){
+    if(!state.eventos)state.eventos=[];
+    state.eventos.push({id:9999,titulo:'PRUEBA DE AVISO',desc:'Esto es un aviso de prueba',fechaIni:'2026-06-27',horaIni:'08:46',fechaFin:'2026-06-27',horaFin:'08:47',color:'#8E44AD'});
+  }
   setInterval(checkReminders,60000);
   checkReminders();
 }
