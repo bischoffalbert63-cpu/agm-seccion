@@ -584,6 +584,34 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <!-- ESTADÍSTICAS -->
       <div id="tab-estadisticas" class="tab-content">
         <div class="section-header"><span class="section-title">Estadísticas</span></div>
+
+        <!-- Exportar a Excel -->
+        <div class="card" style="margin-bottom:12px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+            <i class="ti ti-table-export" style="color:#2E8B4A;font-size:16px"></i>Exportar datos
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn" onclick="exportExcel('completo')" style="justify-content:center;gap:6px;border-color:#2E8B4A;color:#2E8B4A">
+              <i class="ti ti-file-spreadsheet"></i>Informe completo
+            </button>
+            <button class="btn" onclick="exportExcel('cadetes')" style="justify-content:center;gap:6px">
+              <i class="ti ti-users"></i>Cadetes
+            </button>
+            <button class="btn" onclick="exportExcel('notas')" style="justify-content:center;gap:6px">
+              <i class="ti ti-school"></i>Notas
+            </button>
+            <button class="btn" onclick="exportExcel('sanciones')" style="justify-content:center;gap:6px">
+              <i class="ti ti-gavel"></i>Sanciones
+            </button>
+            <button class="btn" onclick="exportExcel('taf')" style="justify-content:center;gap:6px">
+              <i class="ti ti-run"></i>TAF
+            </button>
+            <button class="btn" onclick="exportExcel('asistencia')" style="justify-content:center;gap:6px">
+              <i class="ti ti-clipboard-check"></i>Asistencia
+            </button>
+          </div>
+        </div>
+
         <div class="card">
           <div style="font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:6px"><i class="ti ti-chart-pie" style="color:#185FA5;font-size:16px"></i>Estadísticas anuales <span id="dash-anual-year" style="font-size:12px;font-weight:400;color:var(--text-secondary);margin-left:4px"></span></div>
           <div id="dash-anual"></div>
@@ -4646,6 +4674,77 @@ function rankingSetCrit(crit){
     if(btn){btn.style.background=c===crit?'#185FA5':'var(--bg-secondary)';btn.style.color=c===crit?'#fff':'var(--text-secondary)';}
   });
   renderRanking();
+}
+// ---- EXPORTAR EXCEL ----
+function exportExcel(tipo){
+  if(typeof XLSX==='undefined'){alert('SheetJS no disponible');return;}
+  const wb=XLSX.utils.book_new();
+  const nombre=c=>c?c.nombre||'':'';
+  const fecha=()=>new Date().toISOString().slice(0,10);
+
+  if(tipo==='cadetes'||tipo==='completo'){
+    const rows=[['ID','Nombre','Empleo','Grupo','Email','Teléfono','Notas']];
+    state.cadetes.forEach(c=>rows.push([c.id,c.nombre||'',c.empleo||'',c.grupo||'',c.email||'',c.tel||'',c.obs||'']));
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Cadetes');
+  }
+  if(tipo==='notas'||tipo==='completo'){
+    const rows=[['Cadete','Ejercicio','Fecha','Tipo','Tema','Nota','Observaciones']];
+    state.ejercicios.forEach(ej=>{
+      (ej.dias||[]).forEach(dia=>{
+        (dia.temas||[]).forEach(tema=>{
+          if(tema.evaluaciones){
+            Object.entries(tema.evaluaciones).forEach(([cId,ev])=>{
+              const c=getCadetById(parseInt(cId));
+              rows.push([nombre(c),ej.nombre||'',dia.fecha||'',ej.tipo||'',tema.nombre||'',ev.nota!=null?ev.nota:'',ev.obs||'']);
+            });
+          }
+        });
+      });
+      if(ej.cadetData){
+        Object.entries(ej.cadetData).forEach(([cId,ev])=>{
+          const c=getCadetById(parseInt(cId));
+          rows.push([nombre(c),ej.nombre||'',ej.fecha||'',ej.tipo||'',ej.nombre||'',ev.nota!=null?ev.nota:'',ev.obs||'']);
+        });
+      }
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Notas');
+  }
+  if(tipo==='sanciones'||tipo==='completo'){
+    const rows=[['Cadete','Fecha','Tipo','Sanción','Descripción','Precepto','Firmeza']];
+    state.sanciones.forEach(s=>{
+      const c=getCadetById(s.cadetId);
+      rows.push([nombre(c),s.fecha||'',s.tipo||'',s.sancion||'',s.desc||'',s.precepto||'',s.firmeza||'']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Sanciones');
+  }
+  if(tipo==='taf'||tipo==='completo'){
+    const rows=[['Cadete','Convocatoria','Fecha','2000m','Dominadas','Abdominales','Velocidad','Resultado']];
+    state.taf.forEach(t=>{
+      const c=getCadetById(t.cadetId);
+      rows.push([nombre(c),t.conv||'',t.fecha||'',t.r2000||'',t.dominadas||'',t.abdominales||'',t.velocidad||'',t.resultado||'']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'TAF');
+  }
+  if(tipo==='asistencia'||tipo==='completo'){
+    const rows=[['Cadete','Fecha','Estado','Motivo']];
+    state.asistencia.forEach(a=>{
+      const c=getCadetById(a.cadetId);
+      rows.push([nombre(c),a.fecha||'',a.estado||'',a.motivo||'']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Asistencia');
+  }
+  if(tipo==='completo'){
+    const rows=[['Cadete','Tarea','Fecha asignación','Fecha límite','Prioridad','Estado']];
+    state.tareasCadetes.forEach(t=>{
+      const c=getCadetById(t.cadetId);
+      rows.push([nombre(c),t.tarea||'',t.fechaAsig||'',t.fechaLimite||'',t.prioridad||'',t.done?'Completada':'Pendiente']);
+    });
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),'Tareas cadetes');
+  }
+
+  if(wb.SheetNames.length===0){alert('No hay datos para exportar');return;}
+  const sufijo={completo:'informe_completo',cadetes:'cadetes',notas:'notas',sanciones:'sanciones',taf:'taf',asistencia:'asistencia'}[tipo]||tipo;
+  XLSX.writeFile(wb,`SIGECAC_${sufijo}_${fecha()}.xlsx`);
 }
 function renderDashAnual(){
   const el=document.getElementById('dash-anual');if(!el)return;
