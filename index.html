@@ -1389,8 +1389,6 @@ function initNotifications(){
   }
   setInterval(checkReminders,60000);
   checkReminders();
-  // PRUEBA — quitar después
-  setTimeout(()=>showInAppReminder('📅','PRUEBA DE AVISO','Esto es un aviso sonoro — si lo oyes, ¡funciona!','#8E44AD'),3000);
 }
 let _audioCtx=null;
 function initAudioCtx(){
