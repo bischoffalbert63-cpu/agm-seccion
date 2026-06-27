@@ -321,7 +321,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
       <!-- CAPITÃN JEFE DE SECCIÃ"N (dashboard) -->
       <div id="tab-dashboard" class="tab-content active">
-        <div class="section-header"><span class="section-title">Capitán jefe de sección</span><button class="btn btn-sm" style="background:#185FA5;color:#fff;border:none" onclick="printAllInformes()"><i class="ti ti-file-type-pdf"></i> PDF Sección</button></div>
+        <div class="section-header"><span class="section-title">Capitán jefe de sección</span><div style="display:flex;gap:6px"><button class="btn btn-sm" style="background:#2E8B4A;color:#fff;border:none" onclick="openParteDiario()"><i class="ti ti-clipboard-text"></i> Parte diario</button><button class="btn btn-sm" style="background:#185FA5;color:#fff;border:none" onclick="printAllInformes()"><i class="ti ti-file-type-pdf"></i> PDF Sección</button></div></div>
         <div id="dash-alerts"></div>
         <div class="grid4" id="dash-metrics" style="margin-bottom:10px"></div>
         <div class="card">
@@ -910,6 +910,27 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-organigrama')">Cancelar</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveOrganigrama()"><i class="ti ti-check"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARTE DIARIO -->
+<div id="modal-parte" class="modal-overlay hidden">
+  <div class="modal" style="max-width:520px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-clipboard-text" style="margin-right:6px"></i>Parte diario</span>
+      <button class="modal-close" onclick="closeModal('modal-parte')">×</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+        <label style="font-size:12px;color:var(--text-secondary)">Fecha del parte</label>
+        <input type="date" id="parte-fecha" style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;background:var(--surface)" onchange="generarParte()">
+      </div>
+      <div id="parte-preview" style="padding:14px;white-space:pre-wrap;font-family:monospace;font-size:12px;line-height:1.6;max-height:55vh;overflow-y:auto;background:var(--bg)"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-parte')">Cerrar</button>
+      <button class="btn btn-primary" onclick="copiarParte()"><i class="ti ti-copy"></i> Copiar</button>
     </div>
   </div>
 </div>
@@ -4734,6 +4755,102 @@ function rankingSetCrit(crit){
     if(btn){btn.style.background=c===crit?'#185FA5':'var(--bg-secondary)';btn.style.color=c===crit?'#fff':'var(--text-secondary)';}
   });
   renderRanking();
+}
+// ---- PARTE DIARIO ----
+function openParteDiario(){
+  document.getElementById('parte-fecha').value=today;
+  generarParte();
+  openModal('modal-parte');
+}
+function generarParte(){
+  const fecha=document.getElementById('parte-fecha').value||today;
+  const [y,m,d]=fecha.split('-');
+  const fmtES=`${d}/${m}/${y}`;
+  const diaSemana=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][new Date(fecha+'T12:00:00').getDay()];
+  const td2=fecha;
+
+  // Efectivos
+  const total=state.cadetes.length;
+  const bajasHoy=(state.permisos||[]).filter(p=>p.tipo==='baja'&&p.inicio<=td2&&(!p.fin||p.fin>=td2));
+  const permisosHoy=(state.permisos||[]).filter(p=>p.tipo!=='baja'&&p.inicio<=td2&&(!p.fin||p.fin>=td2));
+  const presentes=total-bajasHoy.length-permisosHoy.length;
+
+  const nombreC=id=>{const c=getCadetById(id);return c?c.nombre||'':id;};
+
+  // Servicios del día
+  const serviciosHoy=(state.servicios||[]).filter(s=>s.fechaIni<=td2&&(!s.fechaFin||s.fechaFin>=td2));
+
+  // Tareas del día (mis tareas)
+  const tareasHoy=(state.tareas||[]).filter(t=>t.fecha===td2&&!t.done);
+  const tareasCadetesHoy=(state.tareasCadetes||[]).filter(t=>t.fechaLimite===td2&&!t.done);
+
+  // Eventos del día
+  const eventosHoy=(state.eventos||[]).filter(e=>e.fecha===td2);
+
+  // Clases del día
+  const clasesHoy=(state.clases||[]).filter(c=>c.fecha===td2);
+
+  let txt='';
+  txt+=`╔══════════════════════════════════╗\n`;
+  txt+=`   PARTE DIARIO — SECCIÓN INGENIEROS\n`;
+  txt+=`   ${diaSemana.toUpperCase()}, ${fmtES}\n`;
+  txt+=`╚══════════════════════════════════╝\n\n`;
+
+  txt+=`📊 EFECTIVOS\n`;
+  txt+=`  Total sección:  ${total}\n`;
+  txt+=`  Presentes:      ${presentes}\n`;
+  if(bajasHoy.length)txt+=`  Bajas:          ${bajasHoy.length} (${bajasHoy.map(p=>nombreC(p.cadetId)).join(', ')})\n`;
+  if(permisosHoy.length)txt+=`  Permisos:       ${permisosHoy.length} (${permisosHoy.map(p=>nombreC(p.cadetId)).join(', ')})\n`;
+  txt+='\n';
+
+  if(serviciosHoy.length){
+    txt+=`🎖️ SERVICIOS\n`;
+    serviciosHoy.forEach(s=>{
+      const cs=(s.cadetIds||[]).map(id=>nombreC(id)).join(', ');
+      txt+=`  · ${s.tipo||'Servicio'}${s.turno?' ('+s.turno+')':''}${cs?' — '+cs:''}\n`;
+    });
+    txt+='\n';
+  }
+
+  if(eventosHoy.length){
+    txt+=`📅 EVENTOS\n`;
+    eventosHoy.forEach(e=>txt+=`  · ${e.hora?e.hora+' — ':''}${e.nombre||''}${e.lugar?' ['+e.lugar+']':''}\n`);
+    txt+='\n';
+  }
+
+  if(clasesHoy.length){
+    txt+=`🎓 CLASES\n`;
+    clasesHoy.forEach(c=>{const a=CLASES_ASIG[c.asig];txt+=`  · ${c.hora?c.hora+' — ':''}${a?a.label:c.asig||'Clase'}${c.aula?' — Aula '+c.aula:''}${c.tema?' · '+c.tema:''}\n`;});
+    txt+='\n';
+  }
+
+  if(tareasHoy.length){
+    txt+=`📋 TAREAS (jefe)\n`;
+    tareasHoy.forEach(t=>txt+=`  · ${t.hora?t.hora+' — ':''}${t.tarea||''}${t.lugar?' ['+t.lugar+']':''}\n`);
+    txt+='\n';
+  }
+
+  if(tareasCadetesHoy.length){
+    txt+=`📌 TAREAS CADETES\n`;
+    tareasCadetesHoy.forEach(t=>txt+=`  · ${nombreC(t.cadetId)} — ${t.tarea||''}\n`);
+    txt+='\n';
+  }
+
+  txt+=`──────────────────────────────────\n`;
+  txt+=`SIN NOVEDAD / NOVEDADES:\n\n\n`;
+  txt+=`Firmado: ___________________________`;
+
+  document.getElementById('parte-preview').textContent=txt;
+}
+function copiarParte(){
+  const txt=document.getElementById('parte-preview').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=event.currentTarget;
+    const orig=btn.innerHTML;
+    btn.innerHTML='<i class="ti ti-check"></i> Copiado';
+    btn.style.background='#2E8B4A';
+    setTimeout(()=>{btn.innerHTML=orig;btn.style.background='';},2000);
+  }).catch(()=>alert('No se pudo copiar. Selecciona el texto manualmente.'));
 }
 // ---- EXPORTAR EXCEL ----
 function exportExcel(tipo){
