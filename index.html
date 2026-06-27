@@ -142,25 +142,25 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 .task-meta{font-size:11px;color:var(--text-secondary);margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 
 /* CALENDAR */
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-day{padding:3px 2px 2px;font-size:12px;text-align:center;border-radius:6px;cursor:pointer;min-height:52px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center}
-.cal-day-num{line-height:1.5;flex-shrink:0}
-.cal-day-events{width:100%;display:flex;flex-direction:column;gap:1px;padding:0 1px}
-.cal-ev-pill{font-size:8.5px;border-radius:2px;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.5;font-weight:500}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
+.cal-day{padding:2px 1px 3px;font-size:12px;text-align:center;border-radius:4px;cursor:pointer;min-height:72px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:stretch}
+.cal-day-num{text-align:center;line-height:1.8;flex-shrink:0;font-size:12px}
+.cal-day-events{display:flex;flex-direction:column;gap:1px;padding:0 1px;flex:1}
+.cal-ev-pill{font-size:9px;border-radius:3px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.6;font-weight:600;color:#fff}
+.cal-ev-pill.pill-outline{color:inherit;background:transparent!important;border-left:2px solid;padding-left:2px}
 .cal-day:active{opacity:0.7}
-.cal-day.today{background:#FCEBEB;color:#791F1F;font-weight:700}
-.cal-day.other-month{color:var(--text-tertiary)}
-.cal-day.selected{background:#185FA5;color:#fff}
-.cal-day.selected .cal-ev-pill{opacity:0.9}
-.cal-day.overdue{background:#FCEBEB}
-.cal-day.warn-day{background:#FAEEDA}
-.cal-header-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
-.cal-dname{font-size:10px;color:var(--text-secondary);text-align:center;padding:3px 0}
-/* Day event block */
-.ev-block{padding:8px 10px;border-radius:0 6px 6px 0;margin-bottom:4px;border-left:3px solid}
-.ev-block-time{font-size:10px;font-weight:600;margin-bottom:2px}
-.ev-block-title{font-size:13px;font-weight:500}
-.ev-block-desc{font-size:11px;margin-top:2px;color:inherit;opacity:0.75}
+.cal-day.today .cal-day-num{background:#E24B4A;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin:1px auto 1px}
+.cal-day.other-month{color:var(--text-tertiary);background:transparent}
+.cal-day.other-month .cal-ev-pill{opacity:0.4}
+.cal-day.selected .cal-day-num{background:#185FA5;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;margin:1px auto 1px}
+.cal-day.selected{background:#E6F1FB10}
+.cal-header-row{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin-bottom:4px}
+.cal-dname{font-size:10px;color:var(--text-secondary);text-align:center;padding:3px 0;font-weight:500}
+/* Day event block (panel lateral) */
+.ev-block{padding:8px 10px;border-radius:6px;margin-bottom:6px;border-left:3px solid;position:relative}
+.ev-block-time{font-size:10px;font-weight:600;margin-bottom:2px;opacity:0.8}
+.ev-block-title{font-size:13px;font-weight:600}
+.ev-block-desc{font-size:11px;margin-top:3px;opacity:0.75}
 
 /* MISC */
 .section-sep{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em;margin:1rem 0 0.5rem;font-weight:500}
@@ -2347,8 +2347,8 @@ function renderCal(){
     if(ts==='overdue')cls+=' overdue';
     else if(ts==='warn')cls+=' warn-day';
     if(state.selectedCalDay===dstr)cls+=' selected';
-    const pills=items.slice(0,2).map(it=>it.label?`<div class="cal-ev-pill" style="background:${it.bg};color:${it.color}">${it.label}</div>`:'').join('');
-    const more=items.length>2?`<div style="font-size:7px;color:var(--text-tertiary);text-align:left;padding:0 1px">+${items.length-2}</div>`:'';
+    const pills=items.slice(0,3).map(it=>it.label?`<div class="cal-ev-pill" style="background:${it.color}">${it.label}</div>`:`<div class="cal-ev-pill" style="background:${it.color};height:6px;border-radius:3px"></div>`).join('');
+    const more=items.length>3?`<div style="font-size:8px;color:var(--text-tertiary);text-align:left;padding:0 2px;font-weight:500">+${items.length-3} más</div>`:'';
     html+=`<div class="${cls}" onclick="selectCalDay('${dstr}')"><span class="cal-day-num">${d}</span><div class="cal-day-events">${pills}${more}</div></div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;
