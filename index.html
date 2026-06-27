@@ -1424,7 +1424,6 @@ function showInAppReminder(icon,titulo,body,color){
   el.innerHTML=`<span style="font-size:18px">${icon}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${titulo}</div><div style="font-size:12px;opacity:0.9">${body}</div></div><button onclick="document.getElementById('${id}').remove();if(!document.getElementById('reminder-banner').children.length)document.getElementById('reminder-banner').style.display='none'" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0 4px">×</button>`;
   banner.appendChild(el);
   banner.style.display='flex';
-  setTimeout(()=>{const e=document.getElementById(id);if(e){e.remove();if(!banner.children.length)banner.style.display='none';}},30000);
 }
 function checkReminders(){
   const now=new Date();
