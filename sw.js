@@ -1,5 +1,5 @@
-// SW v18
-const CACHE='agm-v18';
+// SW v19
+const CACHE='agm-v19';
 const ASSETS=['/','/index.html','/manifest.json','/icon-192.png','/escudo-inf.png','/academia_general_militar.jpg','/logo-ingenieros.jpg'];
 
 self.addEventListener('install',e=>{
