@@ -2454,26 +2454,27 @@ function renderFichaCadet(){
     });
     // Ordenar desc
     events.sort((a,b)=>b.fecha>a.fecha?1:-1);
-    if(!events.length){html=`<div class="empty"><i class="ti ti-timeline"></i>Sin eventos registrados</div>`;}
-    else{
+    if(!events.length){
+      html=`<div class="card"><div class="empty"><i class="ti ti-timeline"></i>Sin eventos registrados</div></div>`;
+    } else {
       let lastYear='';
-      html=events.map(ev=>{
-        const yr=ev.fecha?ev.fecha.slice(0,4):'';
-        const sep=yr&&yr!==lastYear?(lastYear=yr,`<div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;padding:12px 0 4px">${yr}</div>`):'';
+      const items=events.map(ev=>{
+        const yr=(ev.fecha||'').slice(0,4);
+        const sep=(yr&&yr!==lastYear)?(lastYear=yr,`<div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;padding:14px 0 6px;border-top:1px solid var(--border-t)">${yr}</div>`):'';
         return `${sep}<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-t)">
-          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
-            <div style="width:32px;height:32px;border-radius:50%;background:${ev.color}18;display:flex;align-items:center;justify-content:center">
+          <div style="flex-shrink:0;margin-top:2px">
+            <div style="width:34px;height:34px;border-radius:50%;background:${ev.color}18;border:2px solid ${ev.color}40;display:flex;align-items:center;justify-content:center">
               <i class="ti ${ev.icon}" style="font-size:15px;color:${ev.color}"></i>
             </div>
-            <div style="width:2px;flex:1;background:var(--border-t);margin-top:4px"></div>
           </div>
-          <div style="flex:1;min-width:0;padding-top:4px">
-            <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:2px">${ev.fecha?fmtFecha(ev.fecha):''}</div>
-            <div style="font-size:13px;font-weight:600">${ev.titulo}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;color:var(--text-tertiary);margin-bottom:2px">${ev.fecha?fmtFecha(ev.fecha):''}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text-primary)">${ev.titulo}</div>
             ${ev.sub?`<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${ev.sub}</div>`:''}
           </div>
         </div>`;
       }).join('');
+      html=`<div class="card" style="padding:4px 14px 14px">${items}</div>`;
     }
   } else if(_fichaTab==='tutorias'){
     const tuts=(state.tutorias||[]).filter(t=>t.cadetId===c.id).sort((a,b)=>b.fecha>a.fecha?1:-1);
