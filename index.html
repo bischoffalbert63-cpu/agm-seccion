@@ -1614,6 +1614,38 @@ function checkReminders(){
       }
     }
   });
+
+  // ── CLASES ──
+  (state.clases||[]).forEach(c=>{
+    const asig=CLASES_ASIG[c.asig]||{label:c.asig,color:'#1A7A6E'};
+    // Día anterior a las 20:00
+    if(dayBefore(c.fecha)===td){
+      const key='cl_prev_'+c.id;
+      if(!_notifSent.has(key)&&hhmm>='20:00'&&hhmm<='20:05'){
+        _notifSent.add(key);
+        const extra=asig.label+(c.aula?' · '+c.aula:'');
+        showInAppReminder('🎓','Clase mañana',c.tema,c.horaIni?(c.horaIni+(c.horaFin?' – '+c.horaFin:''))+' · '+fmtFecha(c.fecha):fmtFecha(c.fecha),extra,asig.color);
+        if('Notification' in window&&Notification.permission==='granted')
+          new Notification('🎓 Clase mañana',{body:`${c.tema} – ${asig.label}`,icon:'icon-192.png'});
+      }
+    }
+    // Mismo día: 30 min antes
+    if(c.fecha===td&&c.horaIni){
+      const key='cl_30_'+c.id;
+      if(!_notifSent.has(key)){
+        const [h,m]=c.horaIni.split(':').map(Number);
+        const clTime=new Date();clTime.setHours(h,m,0,0);
+        const diffMin=(clTime-now)/60000;
+        if(diffMin>=28&&diffMin<=32){
+          _notifSent.add(key);
+          const hora=c.horaIni+(c.horaFin?' – '+c.horaFin:'');
+          showInAppReminder('🎓','Clase en 30 min',c.tema,hora,asig.label+(c.aula?' · '+c.aula:''),asig.color);
+          if('Notification' in window&&Notification.permission==='granted')
+            new Notification('🎓 Clase en 30 min',{body:`${c.horaIni} – ${c.tema}`,icon:'icon-192.png'});
+        }
+      }
+    }
+  });
 }
 let _tempFoto='';
 function handleFotoUpload(input){
@@ -2530,6 +2562,12 @@ function renderCal(){
     }
   });
 
+  // Clases — por color de asignatura
+  (state.clases||[]).filter(c=>c.fecha).forEach(c=>{
+    const col=(CLASES_ASIG[c.asig]||{color:'#1A7A6E'}).color;
+    addDayItem(c.fecha,c.tema,col,col);
+  });
+
   // Tareas cadetes — naranja
   state.tareasCadetes.filter(t=>!t.done&&t.fechaLimite).forEach(t=>{
     addDayItem(t.fechaLimite,'','#C47A1E','#C47A1E');
@@ -2597,6 +2635,18 @@ function renderCal(){
         ${t.lugar?`<div class="ev-block-desc"><i class="ti ti-map-pin" style="font-size:10px"></i> ${t.lugar}</div>`:''}
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${priorityBadge(t.prior)}${t.fechaLimite===state.selectedCalDay&&diff!==null?`<span class="chip ${diff<0?'chip-danger':diff<=parseInt(t.aviso||3)?'chip-warn':''}" style="font-size:10px">${diff<0?'Vencida':diff===0?'Hoy':diff+'d'}</span>`:''}</div>
         <i class="ti ti-edit" style="font-size:12px;color:${col};position:absolute;top:8px;right:8px"></i>
+      </div>`});
+    });
+
+    // Clases
+    (state.clases||[]).filter(c=>c.fecha===state.selectedCalDay).forEach(c=>{
+      const asig=CLASES_ASIG[c.asig]||{label:c.asig,color:'#1A7A6E'};
+      allBlocks.push({sortKey:c.horaIni||'12:00',html:`<div class="ev-block" style="background:${asig.color}15;border-color:${asig.color};cursor:pointer;position:relative" onclick="openClaseModal(${c.id})">
+        <div class="ev-block-time" style="color:${asig.color}">${c.horaIni?c.horaIni+(c.horaFin?' – '+c.horaFin:''):'Sin hora'} · ${asig.label}</div>
+        <div class="ev-block-title">${c.tema}</div>
+        ${c.aula?`<div class="ev-block-desc"><i class="ti ti-door" style="font-size:10px"></i> ${c.aula}</div>`:''}
+        ${c.obs?`<div class="ev-block-desc">${c.obs}</div>`:''}
+        <i class="ti ti-edit" style="font-size:12px;color:${asig.color};position:absolute;top:8px;right:8px"></i>
       </div>`});
     });
 
