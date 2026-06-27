@@ -924,6 +924,15 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <div class="form-row"><label>Fecha de asignación</label><input id="tc-fecha-asig" type="date"></div>
       <div class="form-row"><label>Fecha límite</label><input id="tc-fecha-limite" type="date"></div>
     </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha inicio</label><input id="tc-fecha-ini" type="date"></div>
+      <div class="form-row"><label>Hora inicio</label><input id="tc-hora-ini" type="time"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha fin</label><input id="tc-fecha-fin" type="date"></div>
+      <div class="form-row"><label>Hora fin</label><input id="tc-hora-fin" type="time"></div>
+    </div>
+    <div class="form-row"><label>Lugar</label><input id="tc-lugar" placeholder="Lugar de la tarea" autocomplete="off"></div>
     <div class="form-row"><label>Prioridad</label>
       <select id="tc-prioridad"><option value="normal">Normal</option><option value="alta">Alta</option><option value="urgente">Urgente</option></select>
     </div>
@@ -2717,16 +2726,22 @@ function openTareaCadete(cadetId,tareaId){
   document.getElementById('tc-tarea').value=t?t.tarea:'';
   document.getElementById('tc-fecha-asig').value=t?t.fechaAsig:todayStr();
   document.getElementById('tc-fecha-limite').value=t?t.fechaLimite||'':'';
+  document.getElementById('tc-fecha-ini').value=t?t.fechaIni||'':'';
+  document.getElementById('tc-hora-ini').value=t?t.horaIni||'':'';
+  document.getElementById('tc-fecha-fin').value=t?t.fechaFin||'':'';
+  document.getElementById('tc-hora-fin').value=t?t.horaFin||'':'';
+  document.getElementById('tc-lugar').value=t?t.lugar||'':'';
   document.getElementById('tc-prioridad').value=t?t.prioridad:'normal';
   openModal('modal-tarea-cadete');
 }
 function saveTareaCadete(){
   const tarea=document.getElementById('tc-tarea').value.trim();if(!tarea)return;
+  const campos={tarea,fechaAsig:document.getElementById('tc-fecha-asig').value,fechaLimite:document.getElementById('tc-fecha-limite').value,fechaIni:document.getElementById('tc-fecha-ini').value,horaIni:document.getElementById('tc-hora-ini').value,fechaFin:document.getElementById('tc-fecha-fin').value,horaFin:document.getElementById('tc-hora-fin').value,lugar:document.getElementById('tc-lugar').value.trim(),prioridad:document.getElementById('tc-prioridad').value};
   if(_editingTareaCadeteId){
     const t=state.tareasCadetes.find(x=>x.id===_editingTareaCadeteId);
-    if(t){t.tarea=tarea;t.fechaAsig=document.getElementById('tc-fecha-asig').value;t.fechaLimite=document.getElementById('tc-fecha-limite').value;t.prioridad=document.getElementById('tc-prioridad').value;}
+    if(t)Object.assign(t,campos);
   } else {
-    state.tareasCadetes.push({id:state.nextId.tareasCadetes++,cadetId:parseInt(document.getElementById('tc-cadete-id').value),tarea,fechaAsig:document.getElementById('tc-fecha-asig').value,fechaLimite:document.getElementById('tc-fecha-limite').value,prioridad:document.getElementById('tc-prioridad').value,done:false});
+    state.tareasCadetes.push({id:state.nextId.tareasCadetes++,cadetId:parseInt(document.getElementById('tc-cadete-id').value),...campos,done:false});
   }
   save();closeModal('modal-tarea-cadete');render();
 }
