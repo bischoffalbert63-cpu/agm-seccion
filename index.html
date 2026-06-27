@@ -1381,6 +1381,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 <script>
 function hideSplash(){const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.style.display='none',500);initAudioCtx();initNotifications();}
 
+function fmtFecha(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}/${m}/${y}`;}
 // ---- NOTIFICACIONES ----
 const _notifSent=new Set();
 function initNotifications(){
@@ -1389,7 +1390,7 @@ function initNotifications(){
   }
   setInterval(checkReminders,60000);
   checkReminders();
-  setTimeout(()=>showInAppReminder('⏰','Tarea próxima','Instrucción de orden cerrado','09:00 – 10:30','Instrucción · Prioridad: alta · Límite: 2026-06-27','#185FA5'),3000);
+  setTimeout(()=>showInAppReminder('⏰','Tarea próxima','Instrucción de orden cerrado','09:00 – 10:30','Instrucción · Prioridad: alta · Límite: 27/06/2026','#185FA5'),3000);
 }
 let _audioCtx=null;
 function initAudioCtx(){
@@ -1449,7 +1450,7 @@ function checkReminders(){
     if(diffMin>=-2&&diffMin<=15){
       _notifSent.add(key);
       const hora=t.horaInicio+(t.horaFin?' – '+t.horaFin:'');
-      const extra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:'',t.fechaLimite?'Límite: '+t.fechaLimite:''].filter(Boolean).join(' · ');
+      const extra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:'',t.fechaLimite?'Límite: '+fmtFecha(t.fechaLimite):''].filter(Boolean).join(' · ');
       showInAppReminder('⏰','Tarea próxima',t.desc,hora,extra,'#185FA5');
       if('Notification' in window&&Notification.permission==='granted')
         new Notification('⏰ Tarea próxima',{body:`${t.horaInicio} – ${t.desc}`,icon:'icon-192.png'});
@@ -1479,7 +1480,7 @@ function checkReminders(){
     if(hhmm>='08:00'&&hhmm<='08:05'){
       _notifSent.add(key);
       const textra=[t.cat,t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:''].filter(Boolean).join(' · ');
-      showInAppReminder('📋','Tarea vence hoy',t.desc,t.fechaLimite,textra,'#185FA5');
+      showInAppReminder('📋','Tarea vence hoy',t.desc,fmtFecha(t.fechaLimite),textra,'#185FA5');
       if('Notification' in window&&Notification.permission==='granted')
         new Notification('📋 Tarea vence hoy',{body:t.desc,icon:'icon-192.png'});
     }
