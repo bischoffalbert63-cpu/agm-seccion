@@ -2490,6 +2490,7 @@ function renderCal(){
       allBlocks.push({sortKey:e.horaIni||'00:00',html:`<div class="ev-block" style="background:${col}15;border-color:${col};cursor:pointer" onclick="openEventoModal(${e.id})">
         <div class="ev-block-time" style="color:${col}">${e.horaIni?e.horaIni+(e.horaFin?' – '+e.horaFin:''):'Todo el día'} · Evento</div>
         <div class="ev-block-title">${e.titulo}</div>
+        ${e.lugar?`<div class="ev-block-desc"><i class="ti ti-map-pin" style="font-size:10px"></i> ${e.lugar}</div>`:''}
         ${e.desc?`<div class="ev-block-desc">${e.desc}</div>`:''}
         <i class="ti ti-edit" style="font-size:12px;color:${col};position:absolute;top:8px;right:8px"></i>
       </div>`});
@@ -2515,6 +2516,7 @@ function renderCal(){
       allBlocks.push({sortKey:t.horaInicio||'23:59',html:`<div class="ev-block" style="background:${col}12;border-color:${col};position:relative" onclick="openMiTareaModal(${t.id})">
         <div class="ev-block-time" style="color:${col}">${t.horaInicio?t.horaInicio+(t.horaFin?' – '+t.horaFin:''):'Sin hora'} · ${t.cat}</div>
         <div class="ev-block-title">${t.desc}</div>
+        ${t.lugar?`<div class="ev-block-desc"><i class="ti ti-map-pin" style="font-size:10px"></i> ${t.lugar}</div>`:''}
         <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">${priorityBadge(t.prior)}${t.fechaLimite===state.selectedCalDay&&diff!==null?`<span class="chip ${diff<0?'chip-danger':diff<=parseInt(t.aviso||3)?'chip-warn':''}" style="font-size:10px">${diff<0?'Vencida':diff===0?'Hoy':diff+'d'}</span>`:''}</div>
         <i class="ti ti-edit" style="font-size:12px;color:${col};position:absolute;top:8px;right:8px"></i>
       </div>`});
@@ -2529,6 +2531,7 @@ function renderCal(){
       allBlocks.push({sortKey:'23:58',html:`<div class="ev-block" style="background:${col}12;border-color:${col}">
         <div class="ev-block-time" style="color:${col}"><i class="ti ti-user" style="font-size:11px"></i> ${c?c.nombre.split(',')[0]:'Cadete'}</div>
         <div class="ev-block-title">${t.tarea}</div>
+        ${t.lugar?`<div class="ev-block-desc"><i class="ti ti-map-pin" style="font-size:10px"></i> ${t.lugar}</div>`:''}
         <div style="margin-top:4px;display:flex;gap:4px">${priorityBadge(t.prioridad)}<span class="chip ${diff<0?'chip-danger':diff<=3?'chip-warn':''}" style="font-size:10px">${diff<0?'Vencida':diff===0?'Hoy':diff+'d'}</span></div>
       </div>`});
     });
