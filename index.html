@@ -590,6 +590,21 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         </div>
       </div><!-- /tab-estadisticas -->
 
+      <!-- ===== TAB CLASES ===== -->
+      <div id="tab-clases" class="tab-content">
+        <div class="section-header"><span class="section-title">Mis Clases</span></div>
+
+        <!-- Sub-tabs asignatura -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="sub-tab active" onclick="clasesSetAsig('todas')" id="clases-btn-todas">Todas</button>
+          <button class="sub-tab" onclick="clasesSetAsig('nbq')" id="clases-btn-nbq">Defensa NBQ</button>
+          <button class="sub-tab" onclick="clasesSetAsig('construccion')" id="clases-btn-construccion">Proc. Construcción</button>
+          <button class="sub-tab" onclick="clasesSetAsig('materiales')" id="clases-btn-materiales">Materiales</button>
+        </div>
+
+        <div id="lista-clases"></div>
+      </div><!-- /tab-clases -->
+
       <div id="tab-documentos" class="tab-content">
         <div class="section-header"><span class="section-title">Documentos de la Sección</span></div>
         <!-- Visor Planning Anual -->
@@ -674,6 +689,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
     <button class="bnav-btn" onclick="showTab('mstareas')" id="nav-mstareas">
       <i class="ti ti-calendar-event"></i><span>Tareas y eventos</span>
+    </button>
+    <button class="bnav-btn" onclick="showTab('clases')" id="nav-clases">
+      <i class="ti ti-school"></i><span>Clases</span>
     </button>
     <button class="bnav-btn" onclick="showTab('documentos')" id="nav-documentos">
       <i class="ti ti-folder"></i><span>Documentos</span>
@@ -1322,6 +1340,41 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 </div>
 
 <!-- MODAL EVENTO -->
+<!-- MODAL CLASE -->
+<div id="modal-clase" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="clase-modal-title">Nueva clase</span>
+      <button class="btn btn-icon" onclick="closeModal('modal-clase')"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="form-row"><label>Asignatura</label>
+      <select id="clase-asig">
+        <option value="nbq">Defensa NBQ</option>
+        <option value="construccion">Proc. Generales de Construcción</option>
+        <option value="materiales">Materiales de Construcción</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Tema / Contenido</label><input id="clase-tema" placeholder="Tema de la clase" autocomplete="off"></div>
+    <div class="form-grid">
+      <div class="form-row"><label>Fecha</label><input id="clase-fecha" type="date"></div>
+      <div class="form-row"><label>Aula</label><input id="clase-aula" placeholder="Aula o lugar" autocomplete="off"></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row"><label>Hora inicio</label><input id="clase-hora-ini" type="time"></div>
+      <div class="form-row"><label>Hora fin</label><input id="clase-hora-fin" type="time"></div>
+    </div>
+    <div class="form-row"><label>Observaciones</label><textarea id="clase-obs" rows="2" placeholder="Notas adicionales..." style="resize:vertical"></textarea></div>
+    <div id="clase-del-btn" style="display:none;margin-bottom:6px">
+      <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="deleteClase(_editingClaseId)"><i class="ti ti-trash"></i> Eliminar clase</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-clase')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveClase()"><i class="ti ti-check"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-evento" class="modal-overlay hidden">
   <div class="modal">
     <div class="modal-drag"></div>
@@ -1747,6 +1800,7 @@ function showTab(t){
   document.getElementById('nav-'+t).classList.add('active');
   state.activeTab=t;
   if(t==='mstareas'){const now=new Date();state.calYear=now.getFullYear();state.calMonth=now.getMonth();state.selectedCalDay=null;}
+  if(t==='clases')renderClases();
   document.getElementById('scroll-content').scrollTo(0,0);
   updateFab(t);
   render();
@@ -1785,6 +1839,8 @@ function fabAction(){
   } else if(t==='mstareas'){
     if(state.activeSubTab.mstareas==='agenda'){state.agendaDia=todayStr();renderAgenda();showMstSubTab('agenda');}
     else{openFabMenu();}
+  } else if(t==='clases'){
+    openClaseModal();
   } else if(t==='documentos'){
     document.getElementById('docs-file-input').click();
   }
@@ -2665,6 +2721,7 @@ function saveEvento(){
   } else {
     if(!state.eventos)state.eventos=[];
     if(!state.programasSemanales)state.programasSemanales=[];
+    if(!state.clases)state.clases=[];if(!state.nextId.clases)state.nextId.clases=1;
     state.eventos.push({id:state.nextId.eventos++,...obj});
   }
   save();closeModal('modal-evento');renderCal();
@@ -3795,6 +3852,77 @@ function docsConfirmUpload(){
   _docsPendingIdx++;
   document.getElementById('docs-file-input').value='';
   if(_docsPendingIdx<_docsPendingFiles.length){docsNextFile();}else{_docsPendingFiles=[];}
+}
+// ---- CLASES ----
+const CLASES_ASIG={nbq:{label:'Defensa NBQ',color:'#8E44AD'},construccion:{label:'Proc. Construcción',color:'#2E8B4A'},materiales:{label:'Materiales',color:'#C47A1E'}};
+let _clasesAsigFiltro='todas';
+let _editingClaseId=null;
+function clasesSetAsig(asig){
+  _clasesAsigFiltro=asig;
+  ['todas','nbq','construccion','materiales'].forEach(a=>{
+    const btn=document.getElementById('clases-btn-'+a);
+    if(btn)a===asig?btn.classList.add('active'):btn.classList.remove('active');
+  });
+  renderClases();
+}
+function openClaseModal(id){
+  _editingClaseId=id||null;
+  const c=id?(state.clases||[]).find(x=>x.id===id):null;
+  document.getElementById('clase-modal-title').textContent=c?'Editar clase':'Nueva clase';
+  document.getElementById('clase-asig').value=c?c.asig:'nbq';
+  document.getElementById('clase-tema').value=c?c.tema:'';
+  document.getElementById('clase-fecha').value=c?c.fecha:todayStr();
+  document.getElementById('clase-aula').value=c?c.aula||'':'';
+  document.getElementById('clase-hora-ini').value=c?c.horaIni||'':'';
+  document.getElementById('clase-hora-fin').value=c?c.horaFin||'':'';
+  document.getElementById('clase-obs').value=c?c.obs||'':'';
+  document.getElementById('clase-del-btn').style.display=c?'':'none';
+  openModal('modal-clase');
+}
+function saveClase(){
+  const tema=document.getElementById('clase-tema').value.trim();if(!tema)return;
+  const obj={asig:document.getElementById('clase-asig').value,tema,fecha:document.getElementById('clase-fecha').value,aula:document.getElementById('clase-aula').value.trim(),horaIni:document.getElementById('clase-hora-ini').value,horaFin:document.getElementById('clase-hora-fin').value,obs:document.getElementById('clase-obs').value.trim()};
+  if(_editingClaseId){
+    const c=(state.clases||[]).find(x=>x.id===_editingClaseId);
+    if(c)Object.assign(c,obj);
+  } else {
+    if(!state.clases)state.clases=[];
+    if(!state.nextId.clases)state.nextId.clases=1;
+    state.clases.push({id:state.nextId.clases++,...obj});
+  }
+  save();closeModal('modal-clase');renderClases();
+}
+function deleteClase(id){
+  if(!confirm('¿Eliminar esta clase?'))return;
+  state.clases=(state.clases||[]).filter(c=>c.id!==id);
+  save();closeModal('modal-clase');renderClases();
+}
+function renderClases(){
+  const el=document.getElementById('lista-clases');if(!el)return;
+  let lista=(state.clases||[]).slice().sort((a,b)=>a.fecha>b.fecha?1:-1);
+  if(_clasesAsigFiltro!=='todas')lista=lista.filter(c=>c.asig===_clasesAsigFiltro);
+  if(!lista.length){el.innerHTML=`<div class="empty"><i class="ti ti-school"></i>No hay clases programadas</div>`;return;}
+  // Agrupar por fecha
+  const grupos={};
+  lista.forEach(c=>{
+    if(!grupos[c.fecha])grupos[c.fecha]=[];
+    grupos[c.fecha].push(c);
+  });
+  el.innerHTML=Object.entries(grupos).map(([fecha,clases])=>`
+    <div class="section-sep" style="margin:10px 0 8px">${fmtDateEs(fecha)}</div>
+    ${clases.map(c=>{
+      const asig=CLASES_ASIG[c.asig]||{label:c.asig,color:'#185FA5'};
+      return `<div class="card" style="margin-bottom:8px;border-left:4px solid ${asig.color};padding:12px 14px;cursor:pointer;position:relative" onclick="openClaseModal(${c.id})">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${asig.color};margin-bottom:4px">${asig.label}</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">${c.tema}</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-secondary)">
+          ${c.horaIni?`<span><i class="ti ti-clock" style="font-size:11px"></i> ${c.horaIni}${c.horaFin?' – '+c.horaFin:''}</span>`:''}
+          ${c.aula?`<span><i class="ti ti-door" style="font-size:11px"></i> ${c.aula}</span>`:''}
+        </div>
+        ${c.obs?`<div style="font-size:12px;color:var(--text-tertiary);margin-top:4px">${c.obs}</div>`:''}
+        <i class="ti ti-edit" style="position:absolute;top:10px;right:10px;font-size:13px;color:var(--text-tertiary)"></i>
+      </div>`;
+    }).join('')}`).join('');
 }
 function docsShowPanel(panel){
   ['general','programas'].forEach(p=>{
