@@ -1254,10 +1254,11 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <!-- Pestañas -->
     <div style="display:flex;gap:2px;padding:0 12px 10px;overflow-x:auto">
       <button onclick="ejDocsSetTab('todos')" id="ejdoc-tab-todos" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.9);color:#185FA5;font-size:12px;font-weight:700;cursor:pointer">Todos</button>
-      <button onclick="ejDocsSetTab('expord')" id="ejdoc-tab-expord" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Expord</button>
+      <button onclick="ejDocsSetTab('expord')" id="ejdoc-tab-expord" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Exopord</button>
+      <button onclick="ejDocsSetTab('fragos')" id="ejdoc-tab-fragos" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Fragos</button>
       <button onclick="ejDocsSetTab('apoyos')" id="ejdoc-tab-apoyos" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Apoyos</button>
       <button onclick="ejDocsSetTab('cartografia')" id="ejdoc-tab-cartografia" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Cartografía</button>
-      <button onclick="ejDocsSetTab('fragos')" id="ejdoc-tab-fragos" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Fragos</button>
+      <button onclick="ejDocsSetTab('fichas')" id="ejdoc-tab-fichas" style="flex-shrink:0;padding:5px 12px;border-radius:20px;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:12px;font-weight:600;cursor:pointer">Fichas / Manuales</button>
     </div>
   </div>
   <div style="max-width:700px;margin:0 auto;padding:16px 16px 40px" id="ej-docs-body"></div>
@@ -3619,10 +3620,11 @@ let _ejDocsId=null;
 let _ejDocsTab='todos';
 const EJ_TABS={
   todos:null,
-  expord:['OPORD','OTM','EXOPORD','ProgAct','Briefing'],
-  apoyos:['Apoyos'],
+  expord:['OPORD','OTM','EXOPORD','ProgAct','Briefing','Informe'],
+  fragos:['FRAGO'],
+  apoyos:['Apoyos','EstadillosBus','T500'],
   cartografia:['Cartografia','Croquis'],
-  fragos:['FRAGO']
+  fichas:['FichaInst','Otro']
 };
 function ejDocsSetTab(tab){
   _ejDocsTab=tab;
