@@ -661,6 +661,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   </div>
 
 <!-- Visor documento (global) -->
+<!-- REMINDER BANNER -->
+<div id="reminder-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9997;flex-direction:column;gap:1px"></div>
+
 <!-- UPDATE BANNER -->
 <div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#185FA5;color:#fff;padding:10px 16px;align-items:center;justify-content:space-between;gap:8px">
   <span style="font-size:13px;font-weight:500"><i class="ti ti-refresh" style="margin-right:6px"></i>Nueva versión disponible</span>
@@ -1381,21 +1384,31 @@ function hideSplash(){const s=document.getElementById('splash');s.style.opacity=
 // ---- NOTIFICACIONES ----
 const _notifSent=new Set();
 function initNotifications(){
-  if(!('Notification' in window))return;
-  if(Notification.permission==='default'){
+  if('Notification' in window&&Notification.permission==='default'){
     Notification.requestPermission();
   }
   setInterval(checkReminders,60000);
   checkReminders();
 }
+function showInAppReminder(icon,titulo,body,color){
+  const banner=document.getElementById('reminder-banner');
+  if(!banner)return;
+  const id='rem_'+Date.now();
+  const el=document.createElement('div');
+  el.id=id;
+  el.style.cssText=`background:${color};color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer`;
+  el.innerHTML=`<span style="font-size:18px">${icon}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${titulo}</div><div style="font-size:12px;opacity:0.9">${body}</div></div><button onclick="document.getElementById('${id}').remove();if(!document.getElementById('reminder-banner').children.length)document.getElementById('reminder-banner').style.display='none'" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:0 4px">×</button>`;
+  banner.appendChild(el);
+  banner.style.display='flex';
+  setTimeout(()=>{const e=document.getElementById(id);if(e){e.remove();if(!banner.children.length)banner.style.display='none';}},30000);
+}
 function checkReminders(){
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
   const now=new Date();
   const td=todayStr();
   const hhmm=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
 
-  // Mis tareas con hora
-  (state.misTareas||[]).filter(t=>!t.done&&t.horaInicio&&t.fechaLimite===td).forEach(t=>{
+  // Tareas con hora (avisa 15 min antes)
+  (state.misTareas||[]).filter(t=>!t.done&&t.horaInicio&&(t.fechaLimite===td||t.fechaPrevista===td)).forEach(t=>{
     const key='mt_'+t.id+'_'+t.horaInicio;
     if(_notifSent.has(key))return;
     const [h,m]=t.horaInicio.split(':').map(Number);
@@ -1403,11 +1416,13 @@ function checkReminders(){
     const diffMin=(taskTime-now)/60000;
     if(diffMin>=-2&&diffMin<=15){
       _notifSent.add(key);
-      new Notification('⏰ Tarea próxima',{body:`${t.horaInicio} – ${t.desc}`,icon:'icon-192.png'});
+      showInAppReminder('⏰','Tarea próxima',`${t.horaInicio} – ${t.desc}`,'#185FA5');
+      if('Notification' in window&&Notification.permission==='granted')
+        new Notification('⏰ Tarea próxima',{body:`${t.horaInicio} – ${t.desc}`,icon:'icon-192.png'});
     }
   });
 
-  // Eventos
+  // Eventos con hora (avisa 15 min antes)
   (state.eventos||[]).filter(e=>e.fechaIni===td&&e.horaIni).forEach(e=>{
     const key='ev_'+e.id+'_'+e.horaIni;
     if(_notifSent.has(key))return;
@@ -1416,7 +1431,21 @@ function checkReminders(){
     const diffMin=(evTime-now)/60000;
     if(diffMin>=-2&&diffMin<=15){
       _notifSent.add(key);
-      new Notification('📅 Evento próximo',{body:`${e.horaIni} – ${e.titulo}`,icon:'icon-192.png'});
+      showInAppReminder('📅','Evento próximo',`${e.horaIni} – ${e.titulo}`,'#8E44AD');
+      if('Notification' in window&&Notification.permission==='granted')
+        new Notification('📅 Evento próximo',{body:`${e.horaIni} – ${e.titulo}`,icon:'icon-192.png'});
+    }
+  });
+
+  // Tareas sin hora que vencen hoy — aviso a las 8:00
+  (state.misTareas||[]).filter(t=>!t.done&&!t.horaInicio&&t.fechaLimite===td).forEach(t=>{
+    const key='mt_hoy_'+t.id;
+    if(_notifSent.has(key))return;
+    if(hhmm>='08:00'&&hhmm<='08:05'){
+      _notifSent.add(key);
+      showInAppReminder('📋','Tarea vence hoy',t.desc,'#185FA5');
+      if('Notification' in window&&Notification.permission==='granted')
+        new Notification('📋 Tarea vence hoy',{body:t.desc,icon:'icon-192.png'});
     }
   });
 
@@ -2322,14 +2351,12 @@ function renderCal(){
     dayItems[dstr].push({label,color,bg});
   }
 
-  // Mis tareas — azul
+  // Mis tareas — siempre azul
   state.misTareas.filter(t=>!t.done&&(t.fechaLimite||t.fechaPrevista)).forEach(t=>{
     const dia=t.fechaPrevista||t.fechaLimite;
-    const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;
-    const col=diff!==null&&diff<0?'#C0392B':diff!==null&&diff<=parseInt(t.aviso||3)?'#E67E22':'#185FA5';
-    addDayItem(dia,t.desc,col,col);
+    addDayItem(dia,t.desc,'#185FA5','#185FA5');
     if(t.fechaLimite&&t.fechaPrevista&&t.fechaLimite!==t.fechaPrevista)
-      addDayItem(t.fechaLimite,t.desc,diff!==null&&diff<0?'#C0392B':'#185FA5',col);
+      addDayItem(t.fechaLimite,t.desc,'#185FA5','#185FA5');
   });
 
   // Eventos — morado
