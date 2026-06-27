@@ -350,6 +350,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           <button class="sub-tab" onclick="showSubTab('cadetes','sanciones')" id="sub-cadetes-sanciones"><i class="ti ti-gavel" style="font-size:13px"></i> Sanciones</button>
           <button class="sub-tab" onclick="showSubTab('cadetes','servicios')" id="sub-cadetes-servicios"><i class="ti ti-shield-star" style="font-size:13px"></i> Servicios</button>
           <button class="sub-tab" onclick="showSubTab('cadetes','taf')" id="sub-cadetes-taf"><i class="ti ti-run" style="font-size:13px"></i> TAF</button>
+          <button class="sub-tab" onclick="showSubTab('cadetes','obra')" id="sub-cadetes-obra"><i class="ti ti-building-warehouse" style="font-size:13px"></i> Obra S.Fernando</button>
         </div>
         <div id="subtab-cadetes-ficha">
           <div class="section-header"><span class="section-title">Cadetes</span></div>
@@ -406,6 +407,35 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           </div>
           <div id="lista-taf"></div>
         </div>
+
+        <!-- OBRA S. FERNANDO -->
+        <div id="subtab-cadetes-obra" class="hidden">
+          <div class="section-header">
+            <span class="section-title">Obra S. Fernando</span>
+            <button class="btn btn-sm btn-primary" onclick="openModal('modal-obra-doc')"><i class="ti ti-plus"></i> Añadir documento</button>
+          </div>
+
+          <!-- Responsables -->
+          <div class="card" style="margin-bottom:10px">
+            <div style="font-size:13px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+              <span><i class="ti ti-users" style="color:#185FA5;margin-right:6px"></i>Responsables de la obra</span>
+              <button class="btn btn-sm" onclick="obraAddResp()"><i class="ti ti-plus"></i> Añadir</button>
+            </div>
+            <div id="obra-responsables"></div>
+          </div>
+
+          <!-- Documentos -->
+          <div style="display:flex;gap:8px;padding:0 1px 10px;flex-wrap:wrap">
+            <button class="btn btn-sm" id="obra-tab-todos" onclick="obraSetTab('todos')" style="background:#185FA5;color:#fff;border-color:#185FA5">Todos</button>
+            <button class="btn btn-sm" id="obra-tab-proyecto" onclick="obraSetTab('proyecto')">Proyecto</button>
+            <button class="btn btn-sm" id="obra-tab-proveedores" onclick="obraSetTab('proveedores')">Proveedores</button>
+            <button class="btn btn-sm" id="obra-tab-facturas" onclick="obraSetTab('facturas')">Facturas</button>
+            <button class="btn btn-sm" id="obra-tab-contratos" onclick="obraSetTab('contratos')">Contratos</button>
+            <button class="btn btn-sm" id="obra-tab-otros" onclick="obraSetTab('otros')">Otros</button>
+          </div>
+          <div id="obra-docs-list"></div>
+        </div>
+
         <div id="subtab-cadetes-notas" class="hidden">
           <div class="section-header">
             <span class="section-title">Notas académicas</span>
@@ -911,6 +941,53 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-organigrama')">Cancelar</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveOrganigrama()"><i class="ti ti-check"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL OBRA DOC -->
+<div id="modal-obra-doc" class="modal-overlay hidden">
+  <div class="modal" style="max-width:440px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title" id="obra-doc-modal-title"><i class="ti ti-file-plus" style="margin-right:6px"></i>Añadir documento</span>
+      <button class="modal-close" onclick="closeModal('modal-obra-doc')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="obra-doc-id">
+      <div class="form-group">
+        <label class="form-label">Categoría</label>
+        <select id="obra-doc-cat" class="form-input">
+          <option value="proyecto">Proyecto</option>
+          <option value="proveedores">Proveedores</option>
+          <option value="facturas">Facturas</option>
+          <option value="contratos">Contratos</option>
+          <option value="otros">Otros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título / descripción</label>
+        <input type="text" id="obra-doc-titulo" class="form-input" placeholder="Ej: Factura nº 23 — Proveedor X">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" id="obra-doc-fecha" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Importe (€)</label>
+        <input type="number" id="obra-doc-importe" class="form-input" placeholder="Solo para facturas/contratos" step="0.01" min="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas</label>
+        <textarea id="obra-doc-notas" class="form-input" rows="2" placeholder="Observaciones adicionales"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Archivo PDF</label>
+        <input type="file" id="obra-doc-file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" class="form-input">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-obra-doc')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveObraDoc()"><i class="ti ti-check"></i> Guardar</button>
     </div>
   </div>
 </div>
@@ -1965,7 +2042,7 @@ function fabAction(){
 }
 function showSubTab(tab,sub){
   state.activeSubTab[tab]=sub;
-  const subTabMap={cadetes:['ficha','sanciones','permisos','notas','asistencia','servicios','taf'],ejercicios:['lista']};
+  const subTabMap={cadetes:['ficha','sanciones','permisos','notas','asistencia','servicios','taf','obra'],ejercicios:['lista']};
   (subTabMap[tab]||[sub]).forEach(s=>{
     const el=document.getElementById('subtab-'+tab+'-'+s);
     const btn=document.getElementById('sub-'+tab+'-'+s);
@@ -1973,6 +2050,7 @@ function showSubTab(tab,sub){
     if(btn)s===sub?btn.classList.add('active'):btn.classList.remove('active');
   });
   if(sub==='permisos')populatePermisoSelect();
+  if(sub==='obra')renderObra();
   render();
 }
 function openModal(id){document.getElementById(id).classList.remove('hidden');}
@@ -4780,6 +4858,143 @@ function rankingSetCrit(crit){
   });
   renderRanking();
 }
+// ---- OBRA S. FERNANDO ----
+const OBRA_CATS={proyecto:{lbl:'Proyecto',color:'#185FA5',icon:'ti-building'},proveedores:{lbl:'Proveedores',color:'#2E8B4A',icon:'ti-truck'},facturas:{lbl:'Facturas',color:'#BA7517',icon:'ti-receipt'},contratos:{lbl:'Contratos',color:'#8E44AD',icon:'ti-writing'},otros:{lbl:'Otros',color:'#555',icon:'ti-file'}};
+let _obraTab='todos';
+
+function obraSetTab(tab){
+  _obraTab=tab;
+  Object.keys(OBRA_CATS).concat(['todos']).forEach(k=>{
+    const btn=document.getElementById('obra-tab-'+k);
+    if(!btn)return;
+    if(k===tab){btn.style.background='#185FA5';btn.style.color='#fff';btn.style.borderColor='#185FA5';}
+    else{btn.style.background='';btn.style.color='';btn.style.borderColor='';}
+  });
+  renderObraDocs();
+}
+
+function renderObra(){
+  renderObraResp();
+  renderObraDocs();
+}
+
+function renderObraResp(){
+  const el=document.getElementById('obra-responsables');if(!el)return;
+  const resp=state.obraResponsables||[];
+  if(!resp.length){el.innerHTML='<div style="font-size:13px;color:var(--text-secondary);padding:4px 0">Sin responsables registrados</div>';return;}
+  el.innerHTML=resp.map((r,i)=>`
+    <div class="row-item" style="padding:8px 0;border-bottom:1px solid var(--border-t)">
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:600">${r.nombre||''}</div>
+        <div style="font-size:12px;color:var(--text-secondary)">${r.cargo||''}${r.tel?' · '+r.tel:''}${r.email?' · '+r.email:''}</div>
+      </div>
+      <button class="btn btn-sm btn-icon btn-danger" onclick="obraDelResp(${i})"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
+}
+
+function obraAddResp(){
+  const nombre=prompt('Nombre del responsable:');if(!nombre)return;
+  const cargo=prompt('Cargo / empresa:');
+  const tel=prompt('Teléfono (opcional):');
+  if(!state.obraResponsables)state.obraResponsables=[];
+  state.obraResponsables.push({nombre,cargo:cargo||'',tel:tel||''});
+  save();renderObraResp();
+}
+
+function obraDelResp(i){
+  if(!confirm('¿Eliminar responsable?'))return;
+  state.obraResponsables.splice(i,1);
+  save();renderObraResp();
+}
+
+function renderObraDocs(){
+  const el=document.getElementById('obra-docs-list');if(!el)return;
+  const docs=(state.obraDocs||[]).filter(d=>_obraTab==='todos'||d.cat===_obraTab).sort((a,b)=>b.fecha>a.fecha?1:-1);
+  if(!docs.length){el.innerHTML='<div class="empty"><i class="ti ti-files"></i>Sin documentos en esta categoría</div>';return;}
+  // Suma de importes si hay facturas/contratos
+  const total=docs.filter(d=>d.importe).reduce((s,d)=>s+parseFloat(d.importe||0),0);
+  const totalHtml=total>0?`<div style="font-size:12px;font-weight:600;color:#BA7517;padding:6px 0 10px">Total: ${total.toLocaleString('es-ES',{style:'currency',currency:'EUR'})}</div>`:'';
+  el.innerHTML=totalHtml+docs.map(d=>{
+    const cat=OBRA_CATS[d.cat]||OBRA_CATS.otros;
+    return`<div class="card" style="margin-bottom:8px;border-left:3px solid ${cat.color}">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <i class="ti ${cat.icon}" style="font-size:20px;color:${cat.color};flex-shrink:0;margin-top:2px"></i>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px">
+            <span class="badge" style="background:${cat.color}18;color:${cat.color};font-size:10px;font-weight:600">${cat.lbl}</span>
+            ${d.fecha?`<span style="font-size:11px;color:var(--text-tertiary)">${fmtFecha(d.fecha)}</span>`:''}
+            ${d.importe?`<span style="font-size:11px;font-weight:700;color:#BA7517">${parseFloat(d.importe).toLocaleString('es-ES',{style:'currency',currency:'EUR'})}</span>`:''}
+          </div>
+          <div style="font-size:13px;font-weight:600">${d.titulo||'Sin título'}</div>
+          ${d.notas?`<div style="font-size:12px;color:var(--text-secondary);margin-top:3px">${d.notas}</div>`:''}
+          ${d.fileUrl?`<a href="${d.fileUrl}" target="_blank" style="font-size:12px;color:#185FA5;display:inline-flex;align-items:center;gap:4px;margin-top:5px"><i class="ti ti-paperclip"></i>Ver archivo</a>`:''}
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn btn-sm btn-icon" onclick="editObraDoc(${d.id})"><i class="ti ti-edit"></i></button>
+          <button class="btn btn-sm btn-icon btn-danger" onclick="delObraDoc(${d.id})"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editObraDoc(id){
+  const d=(state.obraDocs||[]).find(x=>x.id===id);if(!d)return;
+  document.getElementById('obra-doc-id').value=id;
+  document.getElementById('obra-doc-cat').value=d.cat||'otros';
+  document.getElementById('obra-doc-titulo').value=d.titulo||'';
+  document.getElementById('obra-doc-fecha').value=d.fecha||'';
+  document.getElementById('obra-doc-importe').value=d.importe||'';
+  document.getElementById('obra-doc-notas').value=d.notas||'';
+  document.getElementById('obra-doc-modal-title').innerHTML='<i class="ti ti-file-pencil" style="margin-right:6px"></i>Editar documento';
+  openModal('modal-obra-doc');
+}
+
+function saveObraDoc(){
+  if(!state.obraDocs)state.obraDocs=[];
+  if(!state.nextId)state.nextId={};
+  if(!state.nextId.obraDocs)state.nextId.obraDocs=1;
+  const idVal=document.getElementById('obra-doc-id').value;
+  const titulo=document.getElementById('obra-doc-titulo').value.trim();
+  if(!titulo){alert('Introduce un título');return;}
+  const datos={
+    cat:document.getElementById('obra-doc-cat').value,
+    titulo,
+    fecha:document.getElementById('obra-doc-fecha').value,
+    importe:document.getElementById('obra-doc-importe').value||null,
+    notas:document.getElementById('obra-doc-notas').value.trim()
+  };
+  const file=document.getElementById('obra-doc-file').files[0];
+  const finish=(fileUrl)=>{
+    if(fileUrl!==undefined)datos.fileUrl=fileUrl;
+    if(idVal){
+      const idx=state.obraDocs.findIndex(x=>x.id===parseInt(idVal));
+      if(idx>=0)state.obraDocs[idx]={...state.obraDocs[idx],...datos};
+    } else {
+      datos.id=state.nextId.obraDocs++;
+      state.obraDocs.push(datos);
+    }
+    save();
+    document.getElementById('obra-doc-id').value='';
+    document.getElementById('obra-doc-file').value='';
+    document.getElementById('obra-doc-modal-title').innerHTML='<i class="ti ti-file-plus" style="margin-right:6px"></i>Añadir documento';
+    closeModal('modal-obra-doc');
+    renderObraDocs();
+  };
+  if(file&&_fbReady){
+    const ref=firebase.storage().ref('obra/'+Date.now()+'_'+file.name);
+    ref.put(file).then(snap=>snap.ref.getDownloadURL()).then(url=>finish(url)).catch(()=>finish(undefined));
+  } else {
+    finish(undefined);
+  }
+}
+
+function delObraDoc(id){
+  if(!confirm('¿Eliminar documento?'))return;
+  state.obraDocs=(state.obraDocs||[]).filter(d=>d.id!==id);
+  save();renderObraDocs();
+}
+
 // ---- PARTE DIARIO ----
 function openParteDiario(){
   document.getElementById('parte-fecha').value=todayStr();
