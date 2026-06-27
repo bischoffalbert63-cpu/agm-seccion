@@ -605,6 +605,13 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
             <a id="planning-pdf-btn" href="planning.pdf" target="_blank" class="btn btn-sm btn-primary" style="text-decoration:none"><i class="ti ti-eye"></i> Ver</a>
           </div>
         </div>
+        <!-- Sub-tabs documentos -->
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          <button class="sub-tab active" onclick="docsShowPanel('general')" id="docs-panel-btn-general"><i class="ti ti-files" style="font-size:12px"></i> General</button>
+          <button class="sub-tab" onclick="docsShowPanel('programas')" id="docs-panel-btn-programas"><i class="ti ti-calendar-week" style="font-size:12px"></i> Programas Semanales</button>
+        </div>
+
+        <div id="docs-panel-general">
         <!-- Zona de subida -->
         <div class="card" id="docs-dropzone" style="border:2px dashed var(--border-s);background:var(--bg-secondary);text-align:center;padding:2rem 1rem;cursor:pointer"
           onclick="document.getElementById('docs-file-input').click()"
@@ -627,6 +634,23 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           <button class="sub-tab" onclick="docsSetCat('otros')" id="docs-cat-otros">Otros</button>
         </div>
         <div id="lista-docs"></div>
+        </div><!-- /docs-panel-general -->
+
+        <!-- Panel Programas Semanales -->
+        <div id="docs-panel-programas" style="display:none">
+          <div class="card" id="prog-dropzone" style="border:2px dashed var(--border-s);background:var(--bg-secondary);text-align:center;padding:2rem 1rem;cursor:pointer;margin-bottom:12px"
+            onclick="document.getElementById('prog-file-input').click()"
+            ondragover="event.preventDefault();this.style.borderColor='#185FA5'"
+            ondragleave="this.style.borderColor=''"
+            ondrop="event.preventDefault();this.style.borderColor='';progHandleFiles(event.dataTransfer.files)">
+            <i class="ti ti-cloud-upload" style="font-size:36px;color:#185FA5;margin-bottom:8px"></i>
+            <div style="font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:4px">Subir programa semanal</div>
+            <div style="font-size:11px;color:var(--text-tertiary)">PDF · Arrastra o haz clic</div>
+            <input type="file" id="prog-file-input" style="display:none" accept=".pdf" onchange="progHandleFiles(this.files)">
+          </div>
+          <div id="lista-programas"></div>
+        </div>
+
       </div><!-- /tab-documentos -->
 
     </div><!-- /content -->
@@ -2640,6 +2664,7 @@ function saveEvento(){
     if(e)Object.assign(e,obj);
   } else {
     if(!state.eventos)state.eventos=[];
+    if(!state.programasSemanales)state.programasSemanales=[];
     state.eventos.push({id:state.nextId.eventos++,...obj});
   }
   save();closeModal('modal-evento');renderCal();
@@ -3770,6 +3795,55 @@ function docsConfirmUpload(){
   _docsPendingIdx++;
   document.getElementById('docs-file-input').value='';
   if(_docsPendingIdx<_docsPendingFiles.length){docsNextFile();}else{_docsPendingFiles=[];}
+}
+function docsShowPanel(panel){
+  ['general','programas'].forEach(p=>{
+    document.getElementById('docs-panel-'+p).style.display=p===panel?'':'none';
+    const btn=document.getElementById('docs-panel-btn-'+p);
+    if(btn)p===panel?btn.classList.add('active'):btn.classList.remove('active');
+  });
+  if(panel==='programas')renderProgramas();
+}
+function progHandleFiles(files){
+  const f=files[0];if(!f)return;
+  if(!f.type.includes('pdf')){alert('Solo se admiten PDF');return;}
+  if(!window.firebase){alert('Sin conexión a Firebase');return;}
+  const ref=firebase.storage().ref('programas/'+Date.now()+'_'+f.name);
+  showUploadProgress(f.name,0);
+  const task=ref.put(f);
+  task.on('state_changed',
+    snap=>showUploadProgress(f.name,Math.round(snap.bytesTransferred/snap.totalBytes*100)),
+    err=>{hideUploadProgress();alert('Error: '+err.message);},
+    ()=>{task.snapshot.ref.getDownloadURL().then(url=>{
+      hideUploadProgress();
+      if(!state.programasSemanales)state.programasSemanales=[];
+      state.programasSemanales.push({id:Date.now(),nombre:f.name,fecha:todayStr(),url});
+      save();renderProgramas();
+      document.getElementById('prog-file-input').value='';
+    });}
+  );
+}
+function progDelete(id){
+  if(!confirm('¿Eliminar este programa?'))return;
+  state.programasSemanales=(state.programasSemanales||[]).filter(p=>p.id!==id);
+  save();renderProgramas();
+}
+function renderProgramas(){
+  const el=document.getElementById('lista-programas');if(!el)return;
+  const lista=state.programasSemanales||[];
+  if(!lista.length){el.innerHTML=`<div class="empty"><i class="ti ti-calendar-week"></i>No hay programas semanales</div>`;return;}
+  el.innerHTML=lista.slice().reverse().map(p=>`
+    <div class="card" style="display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:8px">
+      <div style="width:36px;height:36px;border-radius:8px;background:#185FA518;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <i class="ti ti-file-type-pdf" style="font-size:20px;color:#185FA5"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+        <div style="font-size:11px;color:var(--text-tertiary)">${fmtFecha(p.fecha)}</div>
+      </div>
+      <a href="${p.url}" target="_blank" rel="noopener" class="btn btn-sm btn-primary"><i class="ti ti-eye"></i> Ver</a>
+      <button class="btn btn-sm btn-icon btn-danger" onclick="progDelete(${p.id})"><i class="ti ti-trash"></i></button>
+    </div>`).join('');
 }
 function docsSetCat(cat){
   docsActiveCat=cat;
