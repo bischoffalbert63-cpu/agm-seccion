@@ -479,7 +479,6 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
             <div style="font-size:13px;font-weight:500" id="cal-selected-label"></div>
             <div style="display:flex;gap:4px">
-              <button class="btn btn-sm btn-primary" onclick="openEventoModal()"><i class="ti ti-calendar-plus"></i> Evento</button>
               <button class="btn btn-sm" id="cal-add-plan-btn" style="display:none" onclick="openPlanActividadModal()"><i class="ti ti-plus"></i> Act. I/A</button>
             </div>
           </div>
@@ -736,6 +735,18 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
 <!-- FAB -->
 <button class="fab" id="fab-btn" onclick="fabAction()" aria-label="Añadir"><i class="ti ti-plus"></i></button>
+<!-- FAB mini menu -->
+<div id="fab-menu" style="display:none;position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 74px);right:16px;z-index:9;display:none;flex-direction:column;gap:8px;align-items:flex-end">
+  <div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="closeFabMenu();openEventoModal()">
+    <span style="background:#fff;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.15)">Evento</span>
+    <div style="width:44px;height:44px;background:#8E44AD;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(142,68,173,0.4)"><i class="ti ti-calendar-event" style="font-size:20px;color:#fff"></i></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;cursor:pointer" onclick="closeFabMenu();openMiTareaModal()">
+    <span style="background:#fff;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,0.15)">Tarea</span>
+    <div style="width:44px;height:44px;background:#185FA5;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(24,95,165,0.4)"><i class="ti ti-checklist" style="font-size:20px;color:#fff"></i></div>
+  </div>
+</div>
+<div id="fab-overlay" onclick="closeFabMenu()" style="display:none;position:fixed;inset:0;z-index:8"></div>
 
 <!-- ========== MODALES ========== -->
 
@@ -1292,10 +1303,10 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     </div>
     <div class="form-row"><label>Color</label>
       <select id="ev-color">
-        <option value="#185FA5">Azul</option>
-        <option value="#2E8B4A">Verde</option>
-        <option value="#C0392B">Rojo</option>
         <option value="#8E44AD">Morado</option>
+        <option value="#C0392B">Rojo</option>
+        <option value="#2E8B4A">Verde</option>
+        <option value="#185FA5">Azul</option>
         <option value="#BA7517">Naranja</option>
         <option value="#5f5e5a">Gris</option>
       </select>
@@ -1622,6 +1633,20 @@ function updateFab(t){
   const hidden=['dashboard','estadisticas','documentos'];
   fab.style.display=hidden.includes(t)?'none':'flex';
 }
+function openFabMenu(){
+  const m=document.getElementById('fab-menu');
+  const o=document.getElementById('fab-overlay');
+  const btn=document.getElementById('fab-btn');
+  m.style.display='flex';o.style.display='block';
+  btn.innerHTML='<i class="ti ti-x"></i>';
+}
+function closeFabMenu(){
+  const m=document.getElementById('fab-menu');
+  const o=document.getElementById('fab-overlay');
+  const btn=document.getElementById('fab-btn');
+  m.style.display='none';o.style.display='none';
+  btn.innerHTML='<i class="ti ti-plus"></i>';
+}
 function fabAction(){
   const t=state.activeTab;
   if(t==='cadetes'){
@@ -1636,7 +1661,7 @@ function fabAction(){
   } else if(t==='ejercicios'){openEjercicioModal();
   } else if(t==='mstareas'){
     if(state.activeSubTab.mstareas==='agenda'){state.agendaDia=todayStr();renderAgenda();showMstSubTab('agenda');}
-    else{openMiTareaModal();}
+    else{openFabMenu();}
   } else if(t==='documentos'){
     document.getElementById('docs-file-input').click();
   }
@@ -2306,34 +2331,31 @@ function renderCal(){
     dayItems[dstr].push({label,color,bg});
   }
 
-  // Mis tareas
-  state.misTareas.filter(t=>!t.done&&t.fechaLimite).forEach(t=>{
-    const diff=diffDays(td,t.fechaLimite);
-    const col=diff<0?'#791F1F':diff<=parseInt(t.aviso||3)?'#633806':'#0C447C';
-    const bg=diff<0?'#FCEBEB':diff<=parseInt(t.aviso||3)?'#FAEEDA':'#E6F1FB';
-    addDayItem(t.fechaLimite,t.desc,col,bg);
-  });
-  state.misTareas.filter(t=>!t.done&&t.fechaPrevista&&t.fechaPrevista!==t.fechaLimite).forEach(t=>{
-    addDayItem(t.fechaPrevista,t.desc,'#0C447C','#E6F1FB');
+  // Mis tareas — azul
+  state.misTareas.filter(t=>!t.done&&(t.fechaLimite||t.fechaPrevista)).forEach(t=>{
+    const dia=t.fechaPrevista||t.fechaLimite;
+    const diff=t.fechaLimite?diffDays(td,t.fechaLimite):null;
+    const col=diff!==null&&diff<0?'#C0392B':diff!==null&&diff<=parseInt(t.aviso||3)?'#E67E22':'#185FA5';
+    addDayItem(dia,t.desc,col,col);
+    if(t.fechaLimite&&t.fechaPrevista&&t.fechaLimite!==t.fechaPrevista)
+      addDayItem(t.fechaLimite,t.desc,diff!==null&&diff<0?'#C0392B':'#185FA5',col);
   });
 
-  // Eventos
+  // Eventos — morado
   (state.eventos||[]).forEach(e=>{
-    const col=e.color||'#185FA5';
-    // span all days of the event
+    const col=e.color||'#8E44AD';
     let cur=e.fechaIni;
     const fin=e.fechaFin||e.fechaIni;
     while(cur<=fin){
-      addDayItem(cur,e.titulo,col,col+'20');
-      // advance one day
+      addDayItem(cur,e.titulo,col,col);
       const d2=new Date(cur+'T12:00:00');d2.setDate(d2.getDate()+1);
       cur=d2.toISOString().slice(0,10);
     }
   });
 
-  // Tareas cadetes (just blue dot style)
+  // Tareas cadetes — naranja
   state.tareasCadetes.filter(t=>!t.done&&t.fechaLimite).forEach(t=>{
-    addDayItem(t.fechaLimite,'','#C47A1E','#FAEEDA');
+    addDayItem(t.fechaLimite,'','#C47A1E','#C47A1E');
   });
 
   let html='';
