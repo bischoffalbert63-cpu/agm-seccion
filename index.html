@@ -1379,7 +1379,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 </div>
 
 <script>
-function hideSplash(){const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.style.display='none',500);initNotifications();}
+function hideSplash(){const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.style.display='none',500);initAudioCtx();initNotifications();}
 
 // ---- NOTIFICACIONES ----
 const _notifSent=new Set();
@@ -1392,19 +1392,27 @@ function initNotifications(){
   // PRUEBA — quitar después
   setTimeout(()=>showInAppReminder('📅','PRUEBA DE AVISO','Esto es un aviso sonoro — si lo oyes, ¡funciona!','#8E44AD'),3000);
 }
+let _audioCtx=null;
+function initAudioCtx(){
+  try{if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}
+}
 function playReminderSound(){
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
-    const beep=(freq,start,dur)=>{
-      const o=ctx.createOscillator();const g=ctx.createGain();
-      o.connect(g);g.connect(ctx.destination);
-      o.frequency.value=freq;o.type='sine';
-      g.gain.setValueAtTime(0,ctx.currentTime+start);
-      g.gain.linearRampToValueAtTime(0.3,ctx.currentTime+start+0.01);
-      g.gain.linearRampToValueAtTime(0,ctx.currentTime+start+dur);
-      o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur+0.05);
-    };
-    beep(880,0,0.15);beep(1100,0.2,0.15);beep(1320,0.4,0.25);
+    if(!_audioCtx)return;
+    const resume=_audioCtx.state==='suspended'?_audioCtx.resume():Promise.resolve();
+    resume.then(()=>{
+      const ctx=_audioCtx;
+      const beep=(freq,start,dur)=>{
+        const o=ctx.createOscillator();const g=ctx.createGain();
+        o.connect(g);g.connect(ctx.destination);
+        o.frequency.value=freq;o.type='sine';
+        g.gain.setValueAtTime(0,ctx.currentTime+start);
+        g.gain.linearRampToValueAtTime(0.3,ctx.currentTime+start+0.01);
+        g.gain.linearRampToValueAtTime(0,ctx.currentTime+start+dur);
+        o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur+0.05);
+      };
+      beep(880,0,0.15);beep(1100,0.2,0.15);beep(1320,0.4,0.25);
+    });
   }catch(e){}
 }
 function showInAppReminder(icon,titulo,body,color){
