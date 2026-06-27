@@ -1389,6 +1389,7 @@ function initNotifications(){
   }
   setInterval(checkReminders,60000);
   checkReminders();
+  setTimeout(()=>showInAppReminder('📅','PRUEBA DE AVISO','Pulsa × para cerrar','#8E44AD'),3000);
 }
 let _audioCtx=null;
 function initAudioCtx(){
