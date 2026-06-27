@@ -1429,7 +1429,7 @@ function showInAppReminder(icon,tipo,nombre,hora,extra,color){
       <div style="font-size:11px;opacity:0.85;text-transform:uppercase;letter-spacing:0.08em;font-weight:600">${tipo}</div>
       <div style="font-size:15px;font-weight:700;line-height:1.2;margin:2px 0">${nombre}</div>
       ${hora?`<div style="font-size:13px;font-weight:600;background:rgba(255,255,255,0.25);display:inline-block;padding:1px 8px;border-radius:10px;margin:2px 0">${hora}</div>`:''}
-      ${extra?`<div style="font-size:11px;opacity:0.85;margin-top:3px">${extra}</div>`:''}
+      ${extra?`<div style="font-size:13px;font-weight:600;opacity:0.95;margin-top:4px">${extra}</div>`:''}
     </div>
     <button onclick="document.getElementById('${id}').remove();if(!document.getElementById('reminder-banner').children.length)document.getElementById('reminder-banner').style.display='none'" style="background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">×</button>`;
   banner.appendChild(el);
