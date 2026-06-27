@@ -1301,16 +1301,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
       <div class="form-row"><label>Fecha fin</label><input id="ev-fecha-fin" type="date"></div>
       <div class="form-row"><label>Hora fin</label><input id="ev-hora-fin" type="time"></div>
     </div>
-    <div class="form-row"><label>Color</label>
-      <select id="ev-color">
-        <option value="#8E44AD">Morado</option>
-        <option value="#C0392B">Rojo</option>
-        <option value="#2E8B4A">Verde</option>
-        <option value="#185FA5">Azul</option>
-        <option value="#BA7517">Naranja</option>
-        <option value="#5f5e5a">Gris</option>
-      </select>
-    </div>
+    <input type="hidden" id="ev-color" value="#8E44AD">
     <div id="ev-del-btn" style="display:none;margin-bottom:6px">
       <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="deleteEvento()"><i class="ti ti-trash"></i> Eliminar evento</button>
     </div>
