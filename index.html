@@ -1440,7 +1440,8 @@ function checkReminders(){
     const diffMin=(taskTime-now)/60000;
     if(diffMin>=-2&&diffMin<=15){
       _notifSent.add(key);
-      showInAppReminder('⏰','Tarea próxima',`${t.horaInicio} – ${t.desc}`,'#185FA5');
+      const lines=[t.horaInicio+(t.horaFin?' – '+t.horaFin:''),t.desc,t.cat?'Categoría: '+t.cat:'',t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:'',t.fechaLimite?'Límite: '+t.fechaLimite:''].filter(Boolean).join(' · ');
+      showInAppReminder('⏰','Tarea próxima',lines,'#185FA5');
       if('Notification' in window&&Notification.permission==='granted')
         new Notification('⏰ Tarea próxima',{body:`${t.horaInicio} – ${t.desc}`,icon:'icon-192.png'});
     }
@@ -1455,7 +1456,8 @@ function checkReminders(){
     const diffMin=(evTime-now)/60000;
     if(diffMin>=-2&&diffMin<=15){
       _notifSent.add(key);
-      showInAppReminder('📅','Evento próximo',`${e.horaIni} – ${e.titulo}`,'#8E44AD');
+      const elines=[e.horaIni+(e.horaFin?' – '+e.horaFin:''),e.titulo,e.desc?e.desc:''].filter(Boolean).join(' · ');
+      showInAppReminder('📅','Evento próximo',elines,'#8E44AD');
       if('Notification' in window&&Notification.permission==='granted')
         new Notification('📅 Evento próximo',{body:`${e.horaIni} – ${e.titulo}`,icon:'icon-192.png'});
     }
@@ -1467,7 +1469,8 @@ function checkReminders(){
     if(_notifSent.has(key))return;
     if(hhmm>='08:00'&&hhmm<='08:05'){
       _notifSent.add(key);
-      showInAppReminder('📋','Tarea vence hoy',t.desc,'#185FA5');
+      const tlines=[t.desc,t.cat?'Categoría: '+t.cat:'',t.prior&&t.prior!=='normal'?'Prioridad: '+t.prior:'',t.fechaLimite?'Límite: '+t.fechaLimite:''].filter(Boolean).join(' · ');
+      showInAppReminder('📋','Tarea vence hoy',tlines,'#185FA5');
       if('Notification' in window&&Notification.permission==='granted')
         new Notification('📋 Tarea vence hoy',{body:t.desc,icon:'icon-192.png'});
     }
