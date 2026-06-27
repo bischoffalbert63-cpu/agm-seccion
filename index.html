@@ -4758,12 +4758,12 @@ function rankingSetCrit(crit){
 }
 // ---- PARTE DIARIO ----
 function openParteDiario(){
-  document.getElementById('parte-fecha').value=today;
+  document.getElementById('parte-fecha').value=todayStr();
   generarParte();
   openModal('modal-parte');
 }
 function generarParte(){
-  const fecha=document.getElementById('parte-fecha').value||today;
+  const fecha=document.getElementById('parte-fecha').value||todayStr();
   const [y,m,d]=fecha.split('-');
   const fmtES=`${d}/${m}/${y}`;
   const diaSemana=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][new Date(fecha+'T12:00:00').getDay()];
