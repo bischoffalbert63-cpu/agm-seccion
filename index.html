@@ -2222,7 +2222,7 @@ function renderFichaCadet(){
     </div>`;
 
   // Tabs
-  const tabs=[['ficha','ti-user','Ficha'],['notas','ti-notebook','Notas'],['ejercicios','ti-map-2','Ejercicios'],['tareas','ti-checklist','Tareas'],['sanciones','ti-gavel','Sanciones'],['permisos','ti-beach','Permisos'],['bajas','ti-stethoscope','Bajas'],['tutorias','ti-message-2','Tutorías']];
+  const tabs=[['ficha','ti-user','Ficha'],['timeline','ti-timeline','Timeline'],['notas','ti-notebook','Notas'],['ejercicios','ti-map-2','Ejercicios'],['tareas','ti-checklist','Tareas'],['sanciones','ti-gavel','Sanciones'],['permisos','ti-beach','Permisos'],['bajas','ti-stethoscope','Bajas'],['tutorias','ti-message-2','Tutorías']];
   document.getElementById('ficha-cadet-tabs').innerHTML=tabs.map(([t,icon,lbl])=>
     `<button onclick="fichaSetTab('${t}')" style="flex-shrink:0;border:none;padding:9px 14px;font-size:12px;cursor:pointer;font-family:var(--font);display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all 0.15s;${_fichaTab===t?'background:#fff;color:#185FA5;font-weight:700;border-bottom:3px solid #185FA5;':'background:transparent;color:rgba(255,255,255,0.7);font-weight:400;border-bottom:3px solid transparent;'}"><i class="ti ${icon}" style="font-size:13px"></i>${lbl}</button>`
   ).join('');
@@ -2416,6 +2416,65 @@ function renderFichaCadet(){
     const bajas=(state.permisos||[]).filter(p=>p.cadetId===c.id&&['baja-medica','rebaje','ausencia','otro'].includes(p.tipo)).sort((a,b)=>b.inicio>a.inicio?1:-1);
     html=`<div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-sm btn-primary" onclick="populatePermisoSelect();openPermisoModal(null,'baja');document.getElementById('p-cadete').value=${c.id}"><i class="ti ti-plus"></i> Añadir</button></div>
     ${bajas.length?bajas.map(p=>permCard(p)).join(''):`<div class="empty"><i class="ti ti-stethoscope"></i>Sin bajas ni rebajes</div>`}`;
+  } else if(_fichaTab==='timeline'){
+    // Recopilar todos los eventos del cadete con fecha
+    const events=[];
+    // Ejercicios con nota
+    state.ejercicios.forEach(ej=>{
+      const ev=ej.cadetData?.[c.id];
+      if(ev&&ej.fecha)events.push({fecha:ej.fecha,tipo:'ejercicio',icon:'ti-map-2',color:'#2E8B4A',titulo:ej.nombre||'Ejercicio',sub:ev.nota!=null?`Nota: ${ev.nota}`:''});
+      (ej.dias||[]).forEach(dia=>{
+        (dia.temas||[]).forEach(tema=>{
+          const tev=tema.evaluaciones?.[c.id];
+          if(tev&&dia.fecha)events.push({fecha:dia.fecha,tipo:'nota',icon:'ti-notebook',color:'#185FA5',titulo:tema.nombre||'Evaluación',sub:`Nota: ${tev.nota!=null?tev.nota:'—'}${tev.obs?' · '+tev.obs:''}`});
+        });
+      });
+    });
+    // Sanciones
+    state.sanciones.filter(s=>s.cadetId===c.id).forEach(s=>{
+      events.push({fecha:s.fecha,tipo:'sancion',icon:'ti-gavel',color:s.tipo==='leve'?'#BA7517':s.tipo==='grave'?'#E24B4A':'#791F1F',titulo:{leve:'Sanción leve',grave:'Sanción grave','muy-grave':'Sanción muy grave'}[s.tipo]||'Sanción',sub:s.desc||''});
+    });
+    // TAF
+    state.taf.filter(t=>t.cadetId===c.id).forEach(t=>{
+      const apto=t.resultado==='apto';
+      events.push({fecha:t.fecha,tipo:'taf',icon:'ti-run',color:apto?'#2E8B4A':'#E24B4A',titulo:`TAF ${t.conv||''}`,sub:`${t.resultado||''}${t.r2000?' · 2000m: '+t.r2000:''}`});
+    });
+    // Permisos y bajas
+    (state.permisos||[]).filter(p=>p.cadetId===c.id).forEach(p=>{
+      const t2=PERMISO_TIPO[p.tipo]||PERMISO_TIPO.otro;
+      events.push({fecha:p.inicio,tipo:'permiso',icon:'ti-beach',color:'#8E44AD',titulo:t2.lbl,sub:p.motivo||''+(p.fin?' → '+fmtFecha(p.fin):'')});
+    });
+    // Tareas completadas
+    state.tareasCadetes.filter(t=>t.cadetId===c.id&&t.done).forEach(t=>{
+      events.push({fecha:t.fechaLimite||t.fechaAsig,tipo:'tarea',icon:'ti-check',color:'#185FA5',titulo:t.tarea||'Tarea',sub:'Completada'});
+    });
+    // Tutorías
+    (state.tutorias||[]).filter(t=>t.cadetId===c.id).forEach(t=>{
+      events.push({fecha:t.fecha,tipo:'tutoria',icon:'ti-message-2',color:'#C47A1E',titulo:'Tutoría',sub:t.temas||''});
+    });
+    // Ordenar desc
+    events.sort((a,b)=>b.fecha>a.fecha?1:-1);
+    if(!events.length){html=`<div class="empty"><i class="ti ti-timeline"></i>Sin eventos registrados</div>`;}
+    else{
+      let lastYear='';
+      html=events.map(ev=>{
+        const yr=ev.fecha?ev.fecha.slice(0,4):'';
+        const sep=yr&&yr!==lastYear?(lastYear=yr,`<div style="font-size:11px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.08em;padding:12px 0 4px">${yr}</div>`):'';
+        return `${sep}<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border-t)">
+          <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+            <div style="width:32px;height:32px;border-radius:50%;background:${ev.color}18;display:flex;align-items:center;justify-content:center">
+              <i class="ti ${ev.icon}" style="font-size:15px;color:${ev.color}"></i>
+            </div>
+            <div style="width:2px;flex:1;background:var(--border-t);margin-top:4px"></div>
+          </div>
+          <div style="flex:1;min-width:0;padding-top:4px">
+            <div style="font-size:12px;color:var(--text-tertiary);margin-bottom:2px">${ev.fecha?fmtFecha(ev.fecha):''}</div>
+            <div style="font-size:13px;font-weight:600">${ev.titulo}</div>
+            ${ev.sub?`<div style="font-size:12px;color:var(--text-secondary);margin-top:2px">${ev.sub}</div>`:''}
+          </div>
+        </div>`;
+      }).join('');
+    }
   } else if(_fichaTab==='tutorias'){
     const tuts=(state.tutorias||[]).filter(t=>t.cadetId===c.id).sort((a,b)=>b.fecha>a.fecha?1:-1);
     const TUT_TIPO={rutinaria:{lbl:'Rutinaria',badge:'badge-blue'},seguimiento:{lbl:'Seguimiento',badge:'badge-green'},orientacion:{lbl:'Orientación',badge:'badge-purple'},disciplinaria:{lbl:'Disciplinaria',badge:'badge-red'},otro:{lbl:'Otro',badge:'badge-gray'}};
