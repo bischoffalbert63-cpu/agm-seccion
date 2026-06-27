@@ -1671,6 +1671,7 @@ function showFotoPreview(src){
   else{ph.classList.remove('hidden');pv.classList.add('hidden');pv.src='';}
 }
 const TEMAS_TACTICOS=['Campo de minas','Tapones de minas','Masa de tapones','Apertura de brechas','Obstáculos de alambre','Refuerzo de posición','Cruce de curso de agua','Movimiento por itinerario','Ocupación de posición defensiva','Ataque a posición','Movimiento en orden de combate','Emboscada','Contraemboscada','Apoyo de fuego','Enlace y transmisiones','Apoyo logístico en combate','Otro'];
+const CLASES_ASIG={nbq:{label:'Defensa NBQ',color:'#C47A1E'},construccion:{label:'Proc. Construcción',color:'#1976D2'},materiales:{label:'Materiales',color:'#C0392B'}};
 const today=new Date();today.setHours(0,0,0,0);
 const COLORS=['#185FA5','#639922','#BA7517','#993556','#533AB7','#0F6E56','#B8500A'];
 function getColor(i){return COLORS[i%COLORS.length]}
@@ -1720,7 +1721,9 @@ let state={
   taf:[],
   tutorias:[],
   eventos:[],
-  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4,organigramas:1,documentos:1,planActividades:63,permisos:1,servicios:1,asistencia:1,taf:1,tutorias:1,eventos:1},
+  clases:[],
+  programasSemanales:[],
+  nextId:{cadetes:5,sanciones:1,tareasCadetes:3,notas:5,ejercicios:2,misTareas:4,organigramas:1,documentos:1,planActividades:63,permisos:1,servicios:1,asistencia:1,taf:1,tutorias:1,eventos:1,clases:1},
   editingCadeteId:null,editingEjId:null,editingOrgId:null,
   calYear:today.getFullYear(),calMonth:today.getMonth(),
   selectedCalDay:null,
@@ -2770,8 +2773,6 @@ function saveEvento(){
     if(e)Object.assign(e,obj);
   } else {
     if(!state.eventos)state.eventos=[];
-    if(!state.programasSemanales)state.programasSemanales=[];
-    if(!state.clases)state.clases=[];if(!state.nextId.clases)state.nextId.clases=1;
     state.eventos.push({id:state.nextId.eventos++,...obj});
   }
   save();closeModal('modal-evento');renderCal();
@@ -3848,7 +3849,7 @@ function docsNextFile(){
   if(_docsPendingIdx>=_docsPendingFiles.length)return;
   const f=_docsPendingFiles[_docsPendingIdx];
   document.getElementById('doc-cat-nombre').textContent=f.name;
-  document.getElementById('doc-cat-select').value='planning';
+  document.getElementById('doc-cat-select').value='planeamiento';
   document.getElementById('doc-cat-desc').value='';
   document.getElementById('modal-doc-cat').classList.remove('hidden');
 }
@@ -3904,7 +3905,6 @@ function docsConfirmUpload(){
   if(_docsPendingIdx<_docsPendingFiles.length){docsNextFile();}else{_docsPendingFiles=[];}
 }
 // ---- CLASES ----
-const CLASES_ASIG={nbq:{label:'Defensa NBQ',color:'#C47A1E'},construccion:{label:'Proc. Construcción',color:'#1976D2'},materiales:{label:'Materiales',color:'#C0392B'}};
 let _clasesAsigFiltro='todas';
 let _editingClaseId=null;
 function clasesSetAsig(asig){
@@ -4636,7 +4636,7 @@ function renderDashAnual(){
   const sanYear=state.sanciones.filter(s=>s.fecha&&s.fecha.startsWith(yStr));
 
   // Servicios del año
-  const servYear=state.servicios.filter(s=>s.fecha&&s.fecha.startsWith(yStr));
+  const servYear=state.servicios.filter(s=>s.fechaIni&&s.fechaIni.startsWith(yStr));
   const servTipos={};servYear.forEach(s=>{servTipos[s.tipo]=(servTipos[s.tipo]||0)+1;});
 
   // TAF del año
@@ -4647,7 +4647,7 @@ function renderDashAnual(){
   const ejYear=state.ejercicios.filter(e=>{try{return e.fecha&&e.fecha.startsWith(yStr)||(e.dias&&e.dias.some(d=>d.fecha&&d.fecha.startsWith(yStr)));}catch(err){return false;}});
 
   // Permisos del año
-  const permYear=state.permisos.filter(p=>p.desde&&p.desde.startsWith(yStr));
+  const permYear=state.permisos.filter(p=>p.inicio&&p.inicio.startsWith(yStr));
 
   const block=(icon,color,label,val,sub)=>`
     <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-s)">
