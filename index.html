@@ -415,10 +415,14 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         <div id="subtab-cadetes-material" class="hidden">
           <div class="section-header">
             <span class="section-title">Material asignado</span>
-            <button class="btn btn-sm" onclick="exportMaterialPDF()" style="background:#185FA5;color:#fff;border:none"><i class="ti ti-file-type-pdf"></i> PDF Revista</button>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-sm" onclick="document.getElementById('material-excel-input').click()" style="background:#2E8B4A;color:#fff;border:none"><i class="ti ti-file-spreadsheet"></i> Importar Excel</button>
+              <button class="btn btn-sm" onclick="exportMaterialPDF()" style="background:#185FA5;color:#fff;border:none"><i class="ti ti-file-type-pdf"></i> PDF Revista</button>
+            </div>
           </div>
+          <input type="file" id="material-excel-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="importMaterialExcel(this)">
           <div style="padding:0 1px 10px">
-            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Haz clic en cualquier fila para registrar los números de serie</div>
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Haz clic en cualquier fila para editar los números de serie · <a onclick="descargarPlantillaMaterial()" style="color:#185FA5;cursor:pointer;text-decoration:underline">Descargar plantilla Excel</a></div>
           </div>
           <div id="material-lista"></div>
         </div>
@@ -5149,6 +5153,71 @@ function exportMaterialPDF(){
   <p>Revisado por: _________________________________ &nbsp;&nbsp; Firma: _____________</p>
   </body></html>`;
   const w=window.open('','_blank');w.document.write(html);w.document.close();w.print();
+}
+
+function descargarPlantillaMaterial(){
+  const wb=XLSX.utils.book_new();
+  const cabecera=[['Nombre','Casco','Chaleco','Fusil HK','Machete']];
+  const filas=(state.cadetes||[]).map(c=>[c.nombre||'',
+    (c.material&&c.material.casco)||'',
+    (c.material&&c.material.chaleco)||'',
+    (c.material&&c.material.fusil)||'',
+    (c.material&&c.material.machete)||''
+  ]);
+  const ws=XLSX.utils.aoa_to_sheet([...cabecera,...filas]);
+  ws['!cols']=[{wch:35},{wch:18},{wch:18},{wch:18},{wch:18}];
+  XLSX.utils.book_append_sheet(wb,ws,'Material');
+  XLSX.writeFile(wb,'plantilla_material.xlsx');
+}
+
+function importMaterialExcel(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{defval:''});
+      if(!rows.length){alert('El archivo está vacío.');return;}
+
+      // Detectar columnas flexiblemente (case-insensitive, tildes opcionales)
+      const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();
+      const findCol=(row,keys)=>Object.keys(row).find(k=>keys.some(kk=>norm(k).includes(norm(kk))));
+
+      const firstRow=rows[0];
+      const colNombre=findCol(firstRow,['nombre','cadete','apellido']);
+      const colCasco=findCol(firstRow,['casco','helmet']);
+      const colChaleco=findCol(firstRow,['chaleco','vest','antifrag']);
+      const colFusil=findCol(firstRow,['fusil','hk','rifle','arma']);
+      const colMachete=findCol(firstRow,['machete','bayoneta','cuchillo']);
+
+      if(!colNombre){alert('No se encontró columna "Nombre" en el Excel.');return;}
+
+      let actualizados=0,noEncontrados=[];
+      rows.forEach(row=>{
+        const nombreExcel=norm(String(row[colNombre]||''));
+        if(!nombreExcel)return;
+        // Buscar cadete por similitud de nombre
+        const cadete=(state.cadetes||[]).find(c=>norm(c.nombre||'').includes(nombreExcel)||nombreExcel.includes(norm(c.nombre||'').split(',')[0]));
+        if(!cadete){noEncontrados.push(row[colNombre]);return;}
+        if(!cadete.material)cadete.material={};
+        if(colCasco&&row[colCasco])cadete.material.casco=String(row[colCasco]).trim();
+        if(colChaleco&&row[colChaleco])cadete.material.chaleco=String(row[colChaleco]).trim();
+        if(colFusil&&row[colFusil])cadete.material.fusil=String(row[colFusil]).trim();
+        if(colMachete&&row[colMachete])cadete.material.machete=String(row[colMachete]).trim();
+        actualizados++;
+      });
+
+      save();
+      input.value='';
+      renderMaterial();
+
+      let msg=`✅ ${actualizados} cadete(s) actualizados.`;
+      if(noEncontrados.length)msg+=`\n\n⚠️ No encontrados en la sección:\n${noEncontrados.join('\n')}`;
+      alert(msg);
+    }catch(err){alert('Error al leer el Excel: '+err.message);}
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 // ---- OBRA S. FERNANDO ----
