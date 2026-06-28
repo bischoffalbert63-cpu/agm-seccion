@@ -1915,7 +1915,6 @@ const _mFins={16:'2026-09-06',28:'2026-11-13',35:'2027-02-14',49:'2027-06-20'};
 state.planActividades.forEach(a=>{if(_mFins[a.id]&&!a.fechaFin)a.fechaFin=_mFins[a.id];});
 }}catch(e){}}());
 // ---- GOOGLE CALENDAR ----
-const GCAL_CLIENT_ID=state&&state.gcalClientId||'';
 const GCAL_SCOPES='https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/tasks.readonly';
 let _gcalToken=null;
 let _gcalEvents=[];
@@ -1963,7 +1962,6 @@ async function gcalFetchAll(){
     const evData=await evRes.json();
     (evData.items||[]).forEach(ev=>{
       const start=ev.start.dateTime||ev.start.date;
-      const end=ev.end&&(ev.end.dateTime||ev.end.date);
       _gcalEvents.push({
         id:'gcal_'+ev.id,
         titulo:ev.summary||'(sin título)',
@@ -2015,14 +2013,25 @@ function renderCalGoogleBtn(){
     el.innerHTML=hasId
       ?`<button class="btn btn-sm" onclick="gcalConnect()" style="background:#1A73E8;color:#fff;border:none"><i class="ti ti-brand-google"></i> Conectar Google Calendar</button>`
       :`<button class="btn btn-sm" onclick="document.getElementById('gcal-config-wrap').style.display=''" style="background:#1A73E8;color:#fff;border:none"><i class="ti ti-brand-google"></i> Conectar Google Calendar</button>`;
-    if(cfg&&!hasId)cfg.style.display='';
+    // No forzar apertura del panel — el usuario lo abre con el botón
   }
 }
 
-// Intentar token guardado al arrancar
+// Intentar token guardado al arrancar — los tokens GIS expiran en ~1h,
+// así que no los restauramos automáticamente; el usuario reconecta con el botón.
+// Si el token falla (401) gcalFetchAll llama gcalDisconnect y avisa al usuario.
 (function(){
   const t=localStorage.getItem('gcal_token');
-  if(t){_gcalToken=t;setTimeout(gcalFetchAll,2000);}
+  if(t){
+    _gcalToken=t;
+    // Verificar token antes de usarlo con una llamada mínima
+    fetch('https://www.googleapis.com/calendar/v3/calendars/primary?fields=id',
+      {headers:{Authorization:'Bearer '+t}})
+    .then(r=>{
+      if(r.ok){setTimeout(gcalFetchAll,500);}
+      else{gcalDisconnect();} // expirado — limpiar silenciosamente
+    }).catch(()=>{/* sin red, no borrar token */});
+  }
 })();
 
 // ---- FIREBASE ----
