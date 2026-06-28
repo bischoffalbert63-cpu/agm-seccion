@@ -5185,20 +5185,41 @@ function importMaterialExcel(input){
       const findCol=(row,keys)=>Object.keys(row).find(k=>keys.some(kk=>norm(k).includes(norm(kk))));
 
       const firstRow=rows[0];
-      const colNombre=findCol(firstRow,['nombre','cadete','apellido']);
+      // Columna nombre completo (una sola) o columnas separadas
+      const colNombre=findCol(firstRow,['nombre completo','nombre_completo','cadete']);
+      const colApe1=findCol(firstRow,['apellido1','apellido 1','primer apellido','1er apellido','ape1','ap1']);
+      const colApe2=findCol(firstRow,['apellido2','apellido 2','segundo apellido','2o apellido','ape2','ap2']);
+      const colNom=findCol(firstRow,['nombre','name']);
       const colCasco=findCol(firstRow,['casco','helmet']);
       const colChaleco=findCol(firstRow,['chaleco','vest','antifrag']);
       const colFusil=findCol(firstRow,['fusil','hk','rifle','arma']);
       const colMachete=findCol(firstRow,['machete','bayoneta','cuchillo']);
 
-      if(!colNombre){alert('No se encontró columna "Nombre" en el Excel.');return;}
+      // Necesitamos al menos nombre completo O (apellido1 + nombre)
+      if(!colNombre&&!colApe1&&!colNom){alert('No se encontró columna de nombre. El Excel debe tener "Apellido1", "Apellido2" y "Nombre", o una columna "Nombre completo".');return;}
 
       let actualizados=0,noEncontrados=[];
       rows.forEach(row=>{
-        const nombreExcel=norm(String(row[colNombre]||''));
+        // Construir cadena de búsqueda desde las columnas disponibles
+        let nombreExcel='';
+        if(colNombre){
+          nombreExcel=norm(String(row[colNombre]||''));
+        } else {
+          // Unir apellidos + nombre → buscar por partes
+          const a1=norm(String(row[colApe1]||''));
+          const a2=colApe2?norm(String(row[colApe2]||'')):'';
+          const n=colNom?norm(String(row[colNom]||'')):'';
+          nombreExcel=[a1,a2,n].filter(Boolean).join(' ');
+        }
         if(!nombreExcel)return;
-        // Buscar cadete por similitud de nombre
-        const cadete=(state.cadetes||[]).find(c=>norm(c.nombre||'').includes(nombreExcel)||nombreExcel.includes(norm(c.nombre||'').split(',')[0]));
+
+        // Buscar cadete: comparar todas las partes del nombre contra el nombre en app
+        // El nombre en app suele ser "APELLIDO1 APELLIDO2, Nombre"
+        const partes=nombreExcel.split(/\s+/).filter(Boolean);
+        const cadete=(state.cadetes||[]).find(c=>{
+          const nc=norm(c.nombre||'');
+          return partes.every(p=>nc.includes(p));
+        });
         if(!cadete){noEncontrados.push(row[colNombre]);return;}
         if(!cadete.material)cadete.material={};
         if(colCasco&&row[colCasco])cadete.material.casco=String(row[colCasco]).trim();
