@@ -1011,6 +1011,30 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
   </div>
 </div>
 
+<!-- MODAL OBRA RESPONSABLE -->
+<div id="modal-obra-resp" class="modal-overlay hidden">
+  <div class="modal" style="max-width:380px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-users" style="margin-right:6px"></i>Añadir responsable</span>
+      <button class="modal-close" onclick="closeModal('modal-obra-resp')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Cadete</label>
+        <select id="obra-resp-sel" class="form-input"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Función en la obra</label>
+        <input type="text" id="obra-resp-cargo" class="form-input" placeholder="Ej: Responsable materiales, Vigilante obra...">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-obra-resp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveObraResp()"><i class="ti ti-check"></i> Añadir</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL OBRA DOC -->
 <div id="modal-obra-doc" class="modal-overlay hidden">
   <div class="modal" style="max-width:440px;width:95%">
@@ -5273,35 +5297,23 @@ function renderObraResp(){
 }
 
 function obraAddResp(){
-  // Cadetes ya no asignados como responsables
   const asignados=new Set((state.obraResponsables||[]).map(r=>r.cadetId));
   const disponibles=(state.cadetes||[]).filter(c=>!asignados.has(c.id));
   if(!disponibles.length){alert('Todos los cadetes ya son responsables.');return;}
-  const opts=disponibles.map(c=>`<option value="${c.id}">${c.nombre||c.id}</option>`).join('');
-  // Mini modal inline via prompt no existe — usamos un dialog creado al vuelo
-  const dlg=document.createElement('div');
-  dlg.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-  dlg.innerHTML=`<div style="background:var(--surface);border-radius:10px;padding:20px;min-width:280px;max-width:90vw">
-    <div style="font-size:14px;font-weight:700;margin-bottom:12px">Añadir responsable</div>
-    <label style="font-size:12px;color:var(--text-secondary)">Cadete</label>
-    <select id="_obra_resp_sel" style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin:4px 0 10px;background:var(--surface)">${opts}</select>
-    <label style="font-size:12px;color:var(--text-secondary)">Función en la obra</label>
-    <input id="_obra_resp_cargo" type="text" placeholder="Ej: Responsable materiales, Vigilante obra..." style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;font-size:13px;margin:4px 0 14px;box-sizing:border-box;background:var(--surface)">
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;font-size:13px">Cancelar</button>
-      <button id="_obra_resp_ok" style="padding:8px 16px;background:#185FA5;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">Añadir</button>
-    </div>
-  </div>`;
-  document.body.appendChild(dlg);
-  document.getElementById('_obra_resp_ok').onclick=()=>{
-    const cadetId=parseInt(document.getElementById('_obra_resp_sel').value);
-    const cargo=document.getElementById('_obra_resp_cargo').value.trim();
-    const c=getCadetById(cadetId);
-    if(!c)return;
-    if(!state.obraResponsables)state.obraResponsables=[];
-    state.obraResponsables.push({cadetId,nombre:c.nombre||'',empleo:c.empleo||'',cargo});
-    save();dlg.remove();renderObraResp();
-  };
+  const sel=document.getElementById('obra-resp-sel');
+  sel.innerHTML=disponibles.map(c=>`<option value="${c.id}">${c.empleo?c.empleo+' — ':''}${c.nombre||c.id}</option>`).join('');
+  document.getElementById('obra-resp-cargo').value='';
+  openModal('modal-obra-resp');
+}
+
+function saveObraResp(){
+  const cadetId=parseInt(document.getElementById('obra-resp-sel').value);
+  const cargo=document.getElementById('obra-resp-cargo').value.trim();
+  const c=getCadetById(cadetId);
+  if(!c)return;
+  if(!state.obraResponsables)state.obraResponsables=[];
+  state.obraResponsables.push({cadetId,nombre:c.nombre||'',empleo:c.empleo||'',cargo});
+  save();closeModal('modal-obra-resp');renderObraResp();
 }
 
 function obraDelResp(i){
