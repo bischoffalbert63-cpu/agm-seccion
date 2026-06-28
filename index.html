@@ -353,6 +353,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
           <button class="sub-tab" onclick="showSubTab('cadetes','servicios')" id="sub-cadetes-servicios"><i class="ti ti-shield-star" style="font-size:13px"></i> Servicios</button>
           <button class="sub-tab" onclick="showSubTab('cadetes','taf')" id="sub-cadetes-taf"><i class="ti ti-run" style="font-size:13px"></i> TAF</button>
           <button class="sub-tab" onclick="showSubTab('cadetes','obra')" id="sub-cadetes-obra"><i class="ti ti-building-warehouse" style="font-size:13px"></i> Obra S.Fernando</button>
+          <button class="sub-tab" onclick="showSubTab('cadetes','material')" id="sub-cadetes-material"><i class="ti ti-shield" style="font-size:13px"></i> Material</button>
         </div>
         <div id="subtab-cadetes-ficha">
           <div class="section-header"><span class="section-title">Cadetes</span></div>
@@ -408,6 +409,18 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
             </select>
           </div>
           <div id="lista-taf"></div>
+        </div>
+
+        <!-- MATERIAL -->
+        <div id="subtab-cadetes-material" class="hidden">
+          <div class="section-header">
+            <span class="section-title">Material asignado</span>
+            <button class="btn btn-sm" onclick="exportMaterialPDF()" style="background:#185FA5;color:#fff;border:none"><i class="ti ti-file-type-pdf"></i> PDF Revista</button>
+          </div>
+          <div style="padding:0 1px 10px">
+            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Haz clic en cualquier fila para registrar los números de serie</div>
+          </div>
+          <div id="material-lista"></div>
         </div>
 
         <!-- OBRA S. FERNANDO -->
@@ -955,6 +968,41 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <div style="display:flex;gap:8px;margin-top:8px">
       <button class="btn" style="flex:1;justify-content:center" onclick="closeModal('modal-organigrama')">Cancelar</button>
       <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="saveOrganigrama()"><i class="ti ti-check"></i>Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MATERIAL CADETE -->
+<div id="modal-material" class="modal-overlay hidden">
+  <div class="modal" style="max-width:420px;width:95%">
+    <div class="modal-header">
+      <span class="modal-title"><i class="ti ti-shield" style="margin-right:6px"></i><span id="material-modal-nombre"></span></span>
+      <button class="modal-close" onclick="closeModal('modal-material')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="material-cadet-id">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px"><i class="ti ti-helmet" style="margin-right:4px"></i>Casco</div>
+          <input type="text" id="mat-casco" class="form-input" placeholder="Nº serie casco">
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px"><i class="ti ti-armor" style="margin-right:4px"></i>Chaleco antifragmentos</div>
+          <input type="text" id="mat-chaleco" class="form-input" placeholder="Nº serie chaleco">
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px"><i class="ti ti-gun" style="margin-right:4px"></i>Fusil HK</div>
+          <input type="text" id="mat-fusil" class="form-input" placeholder="Nº serie fusil HK">
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px"><i class="ti ti-tools" style="margin-right:4px"></i>Machete bayoneta</div>
+          <input type="text" id="mat-machete" class="form-input" placeholder="Nº serie machete bayoneta">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-material')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMaterial()"><i class="ti ti-check"></i> Guardar</button>
     </div>
   </div>
 </div>
@@ -2176,7 +2224,7 @@ function fabAction(){
 }
 function showSubTab(tab,sub){
   state.activeSubTab[tab]=sub;
-  const subTabMap={cadetes:['ficha','sanciones','permisos','notas','asistencia','servicios','taf','obra'],ejercicios:['lista']};
+  const subTabMap={cadetes:['ficha','sanciones','permisos','notas','asistencia','servicios','taf','obra','material'],ejercicios:['lista']};
   (subTabMap[tab]||[sub]).forEach(s=>{
     const el=document.getElementById('subtab-'+tab+'-'+s);
     const btn=document.getElementById('sub-'+tab+'-'+s);
@@ -2185,6 +2233,7 @@ function showSubTab(tab,sub){
   });
   if(sub==='permisos')populatePermisoSelect();
   if(sub==='obra')renderObra();
+  if(sub==='material')renderMaterial();
   render();
 }
 function openModal(id){document.getElementById(id).classList.remove('hidden');}
@@ -5007,6 +5056,101 @@ function rankingSetCrit(crit){
   });
   renderRanking();
 }
+// ---- MATERIAL ----
+const MAT_ITEMS=[
+  {key:'casco',    label:'Casco',               icon:'ti-helmet'},
+  {key:'chaleco',  label:'Chaleco antifrag.',    icon:'ti-shield'},
+  {key:'fusil',    label:'Fusil HK',             icon:'ti-gun'},
+  {key:'machete',  label:'Machete bayoneta',     icon:'ti-tools'},
+];
+
+function renderMaterial(){
+  const el=document.getElementById('material-lista');if(!el)return;
+  const cadetes=state.cadetes||[];
+  if(!cadetes.length){el.innerHTML='<div class="empty"><i class="ti ti-users"></i>Sin cadetes registrados</div>';return;}
+
+  // Cabecera tabla
+  let html=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+    <thead><tr style="border-bottom:2px solid var(--border)">
+      <th style="text-align:left;padding:8px 10px;font-weight:600;white-space:nowrap">Cadete</th>
+      ${MAT_ITEMS.map(m=>`<th style="text-align:left;padding:8px 10px;font-weight:600;white-space:nowrap"><i class="ti ${m.icon}" style="margin-right:4px"></i>${m.label}</th>`).join('')}
+      <th></th>
+    </tr></thead><tbody>`;
+
+  cadetes.forEach(c=>{
+    const mat=c.material||{};
+    const completo=MAT_ITEMS.every(m=>mat[m.key]);
+    html+=`<tr style="border-bottom:1px solid var(--border-t);cursor:pointer" onclick="openMaterial(${c.id})">
+      <td style="padding:9px 10px;font-weight:500;white-space:nowrap">
+        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${completo?'#2E8B4A':'#BA7517'};margin-right:6px;flex-shrink:0"></span>
+        ${c.empleo?'<span style="font-size:11px;color:var(--text-tertiary);margin-right:4px">'+c.empleo+'</span>':''}${c.nombre||'—'}
+      </td>
+      ${MAT_ITEMS.map(m=>`<td style="padding:9px 10px;color:${mat[m.key]?'var(--text-primary)':'var(--text-tertiary)'};">${mat[m.key]||'<span style="font-size:11px">Sin asignar</span>'}</td>`).join('')}
+      <td style="padding:9px 6px;text-align:right"><button class="btn btn-sm btn-icon" onclick="event.stopPropagation();openMaterial(${c.id})"><i class="ti ti-edit"></i></button></td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table></div>`;
+
+  // Resumen
+  const total=cadetes.length;
+  const completos=cadetes.filter(c=>c.material&&MAT_ITEMS.every(m=>c.material[m.key])).length;
+  html=`<div class="card" style="margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+    <span style="font-size:13px"><i class="ti ti-circle-check" style="color:#2E8B4A;margin-right:4px"></i><b>${completos}</b> completos</span>
+    <span style="font-size:13px"><i class="ti ti-alert-circle" style="color:#BA7517;margin-right:4px"></i><b>${total-completos}</b> pendientes</span>
+  </div>`+html;
+
+  el.innerHTML=html;
+}
+
+function openMaterial(cadetId){
+  const c=getCadetById(cadetId);if(!c)return;
+  const mat=c.material||{};
+  document.getElementById('material-cadet-id').value=cadetId;
+  document.getElementById('material-modal-nombre').textContent=c.nombre||'Cadete';
+  MAT_ITEMS.forEach(m=>{document.getElementById('mat-'+m.key).value=mat[m.key]||'';});
+  openModal('modal-material');
+}
+
+function saveMaterial(){
+  const cadetId=parseInt(document.getElementById('material-cadet-id').value);
+  const c=getCadetById(cadetId);if(!c)return;
+  if(!c.material)c.material={};
+  MAT_ITEMS.forEach(m=>{
+    const v=document.getElementById('mat-'+m.key).value.trim();
+    if(v)c.material[m.key]=v; else delete c.material[m.key];
+  });
+  save();closeModal('modal-material');renderMaterial();
+}
+
+function exportMaterialPDF(){
+  const cadetes=state.cadetes||[];
+  let html=`<html><head><meta charset="utf-8"><style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:20px}
+    h2{font-size:14px;margin-bottom:4px}
+    p{font-size:11px;color:#555;margin:0 0 14px}
+    table{width:100%;border-collapse:collapse}
+    th{background:#06152B;color:#fff;padding:6px 8px;text-align:left;font-size:10px}
+    td{padding:6px 8px;border-bottom:1px solid #ddd;font-size:11px}
+    .ok{color:#2E8B4A;font-weight:600} .ko{color:#BA7517}
+    @media print{body{margin:10px}}
+  </style></head><body>
+  <h2>REVISTA DE ARMAMENTO Y MATERIAL — SECCIÓN INGENIEROS AGM</h2>
+  <p>Fecha: ${new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</p>
+  <table><thead><tr>
+    <th>Cadete</th><th>Casco</th><th>Chaleco antifrag.</th><th>Fusil HK</th><th>Machete bayoneta</th>
+  </tr></thead><tbody>`;
+  cadetes.forEach(c=>{
+    const mat=c.material||{};
+    const fila=MAT_ITEMS.map(m=>mat[m.key]?`<td class="ok">${mat[m.key]}</td>`:`<td class="ko">—</td>`).join('');
+    html+=`<tr><td><b>${c.nombre||'—'}</b></td>${fila}</tr>`;
+  });
+  html+=`</tbody></table><br><br>
+  <p>Revisado por: _________________________________ &nbsp;&nbsp; Firma: _____________</p>
+  </body></html>`;
+  const w=window.open('','_blank');w.document.write(html);w.document.close();w.print();
+}
+
 // ---- OBRA S. FERNANDO ----
 const OBRA_CATS={proyecto:{lbl:'Proyecto',color:'#185FA5',icon:'ti-building'},proveedores:{lbl:'Proveedores',color:'#2E8B4A',icon:'ti-truck'},facturas:{lbl:'Facturas',color:'#BA7517',icon:'ti-receipt'},contratos:{lbl:'Contratos',color:'#8E44AD',icon:'ti-writing'},otros:{lbl:'Otros',color:'#555',icon:'ti-file'}};
 let _obraTab='todos';
