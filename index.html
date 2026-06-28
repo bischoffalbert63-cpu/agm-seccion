@@ -2215,6 +2215,8 @@ function fabAction(){
     else if(sub==='asistencia'){openAsistenciaModal();}
     else if(sub==='servicios'){openServicioModal();}
     else if(sub==='notas'){openModal('modal-importar-notas');}
+    else if(sub==='material'){document.getElementById('material-excel-input').click();}
+    else if(sub==='obra'){openModal('modal-obra-doc');}
     else{openModal('modal-cadete');document.getElementById('modal-cadete-title').textContent='Añadir cadete';state.editingCadeteId=null;clearCadeteForm();}
   } else if(t==='ejercicios'){openEjercicioModal();
   } else if(t==='mstareas'){
