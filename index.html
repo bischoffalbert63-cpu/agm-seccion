@@ -2313,34 +2313,49 @@ function scheduleAllPendingNotifications() {
 }
 
 async function testPushNotification(){
-  // Paso 1: pedir permiso si no está
-  if(Notification.permission==='default'){
-    const p=await Notification.requestPermission();
-    if(p!=='granted'){alert('Permiso denegado. Ve a ajustes del navegador y activa notificaciones para esta página.');return;}
-  }
-  if(Notification.permission==='denied'){
-    alert('Notificaciones bloqueadas. Ve a ajustes del navegador → Notificaciones y permite esta página.');
-    return;
-  }
+  let info='DIAGNÓSTICO NOTIFICACIONES\n\n';
 
-  // Paso 2: mostrar notificación directamente desde el SW (funciona con app en background)
+  // 1. Soporte
+  info+=''in Notification in window'' in window?'✅ Notificaciones soportadas':'❌ Notificaciones NO soportadas';
+  info+='\n';
+  info+='serviceWorker' in navigator?'✅ ServiceWorker soportado':'❌ ServiceWorker NO soportado';
+  info+='\n\n';
+
+  // 2. Permiso actual
+  info+='Permiso actual: '+Notification.permission+'\n';
+
+  // 3. Pedir permiso si hace falta
+  if(Notification.permission==='default'){
+    info+='Solicitando permiso...\n';
+    const p=await Notification.requestPermission();
+    info+='Resultado: '+p+'\n';
+  }
+  info+='\n';
+
+  // 4. Estado del SW
   try{
     const reg=await navigator.serviceWorker.ready;
-    await reg.showNotification('🔔 SIGECAC INGENIEROS',{
-      body:'Notificación de prueba — sistema funcionando',
-      icon:'/agm-seccion/icon-192.png',
-      badge:'/agm-seccion/icon-192.png',
-      vibrate:[300,100,300,100,300],
-      requireInteraction:false,
-      tag:'test-notif'
-    });
-    // También programar una para 10s (prueba background real)
-    await scheduleNotification('test_bg_'+Date.now(),'⏰ Prueba background','Esta llega con la app cerrada',Date.now()+10000);
-    const sw=await navigator.serviceWorker.ready;
-    if(sw.active)sw.active.postMessage({type:'CHECK_NOTIFS'});
+    info+='SW activo: '+(reg.active?reg.active.scriptURL:'ninguno')+'\n\n';
+
+    // 5. Intentar notificación directa
+    if(Notification.permission==='granted'){
+      await reg.showNotification('🔔 SIGECAC — PRUEBA',{
+        body:'Si ves esto, las notificaciones funcionan',
+        icon:'/agm-seccion/icon-192.png',
+        vibrate:[400,200,400],
+        tag:'diag-test'
+      });
+      info+='✅ Notificación enviada al SW\n';
+      info+='¿La has visto aparecer?\n';
+    } else {
+      info+='❌ Permiso no concedido — no se puede mostrar notificación\n';
+      info+='Ve a ajustes del navegador → Notificaciones → permite esta web\n';
+    }
   }catch(err){
-    alert('Error: '+err.message+'\n\nAsegúrate de que la app esté instalada en pantalla de inicio.');
+    info+='❌ Error SW: '+err.message+'\n';
   }
+
+  alert(info);
 }
 
 async function activarPush() {
