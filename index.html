@@ -345,6 +345,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-sm" onclick="cambiarPin()" style="background:none;border:1px solid var(--border);color:var(--text-secondary)"><i class="ti ti-lock"></i> Cambiar PIN</button>
           <button class="btn btn-sm" onclick="activarPush()" style="background:none;border:1px solid var(--border);color:var(--text-secondary)" id="btn-push"><i class="ti ti-bell-ringing"></i> Activar notificaciones push</button>
+          <button class="btn btn-sm" onclick="testPushNotification()" style="background:none;border:1px solid var(--border);color:var(--text-secondary)"><i class="ti ti-bell-check"></i> Probar notificación</button>
         </div>
       </div>
 
@@ -2309,6 +2310,16 @@ function scheduleAllPendingNotifications() {
     if (thirtyMin.getTime() > now && thirtyMin.getTime() < limit)
       scheduleNotification('cl_30_' + c.id, '🎓 Clase en 30 min', asig + (c.tema ? ' · ' + c.tema : ''), thirtyMin.getTime());
   });
+}
+
+async function testPushNotification(){
+  if(Notification.permission!=='granted'){alert('Primero activa las notificaciones push.');return;}
+  // Programa una notificación para dentro de 5 segundos
+  await scheduleNotification('test_'+Date.now(),'🔔 Prueba SIGECAC','Esta notificación llega aunque cierres la app',Date.now()+5000);
+  // Pide al SW que compruebe ahora
+  const sw=await navigator.serviceWorker.ready;
+  sw.active&&sw.active.postMessage({type:'CHECK_NOTIFS'});
+  alert('Notificación programada. Cierra la app y en 5 segundos debería sonar.');
 }
 
 async function activarPush() {
