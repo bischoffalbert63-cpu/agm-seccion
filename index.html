@@ -2325,7 +2325,7 @@ function diagNotif(){
     ServiceWorker: <b>${swOk?'✅':'❌'}</b><br>
     Permiso: <b>${perm}</b><br>
     <br>
-    <button onclick="Notification.requestPermission().then(p=>{document.getElementById('_dp').textContent='Permiso: '+p})" style="padding:8px 14px;background:#185FA5;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-right:8px">Pedir permiso</button>
+    <button onclick="navigator.serviceWorker.ready.then(r=>r.showNotification('🔔 SIGECAC',{body:'Funciona — '+new Date().toLocaleTimeString(),vibrate:[400,200,400],tag:'test'})).then(()=>{document.getElementById('_dp').textContent='✅ Enviada — deberías verla ahora'}).catch(e=>{document.getElementById('_dp').textContent='❌ '+e.message})" style="padding:8px 14px;background:#2E8B4A;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-right:8px">🔔 Lanzar ahora</button>
     <button onclick="this.closest('div[style]').remove()" style="padding:8px 14px;border:1px solid #ccc;border-radius:8px;cursor:pointer">Cerrar</button>
     <div id="_dp" style="margin-top:10px;font-size:13px;color:#555"></div>
   </div>`;
