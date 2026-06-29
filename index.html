@@ -309,6 +309,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <div class="topbar-right">
       <button class="btn btn-icon" onclick="openSearch()" title="Buscar" style="font-size:20px;color:var(--text-secondary)"><i class="ti ti-search"></i></button>
       <button class="btn btn-icon" onclick="location.reload()" title="Recargar" style="font-size:20px;color:var(--text-secondary)"><i class="ti ti-refresh"></i></button>
+      <span id="app-ver" style="font-size:10px;color:var(--text-tertiary);padding:2px 6px;background:var(--bg-tertiary);border-radius:8px;cursor:pointer" onclick="diagNotif()" title="Tap para diagnóstico notificaciones">v23</span>
       <span id="sync-indicator" title="Sincronización" style="font-size:18px;color:var(--text-tertiary);padding:4px;display:none"><i class="ti ti-cloud-check"></i></span>
       <span id="offline-badge" title="Sin conexión — los cambios se guardarán al reconectar" style="display:none;align-items:center;gap:4px;background:#BA7517;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;letter-spacing:.04em"><i class="ti ti-wifi-off" style="font-size:13px"></i>SIN CONEXIÓN</span>
       <img src="escudo-inf.png" alt="" style="width:44px;height:44px;object-fit:contain;mix-blend-mode:multiply">
@@ -2312,6 +2313,24 @@ function scheduleAllPendingNotifications() {
   });
 }
 
+function diagNotif(){
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  const notifOk='Notification' in window;
+  const swOk='serviceWorker' in navigator;
+  const perm=notifOk?Notification.permission:'N/A';
+  d.innerHTML=`<div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;font-size:14px;line-height:1.8">
+    <b style="font-size:15px">Diagnóstico — v23</b><br><br>
+    Notificaciones: <b>${notifOk?'✅':'❌'}</b><br>
+    ServiceWorker: <b>${swOk?'✅':'❌'}</b><br>
+    Permiso: <b>${perm}</b><br>
+    <br>
+    <button onclick="Notification.requestPermission().then(p=>{document.getElementById('_dp').textContent='Permiso: '+p})" style="padding:8px 14px;background:#185FA5;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-right:8px">Pedir permiso</button>
+    <button onclick="this.closest('div[style]').remove()" style="padding:8px 14px;border:1px solid #ccc;border-radius:8px;cursor:pointer">Cerrar</button>
+    <div id="_dp" style="margin-top:10px;font-size:13px;color:#555"></div>
+  </div>`;
+  document.body.appendChild(d);
+}
 async function testPushNotification(){
   const lines=[];
   const log=s=>lines.push(s);
