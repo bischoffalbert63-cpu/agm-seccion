@@ -2313,13 +2313,34 @@ function scheduleAllPendingNotifications() {
 }
 
 async function testPushNotification(){
-  if(Notification.permission!=='granted'){alert('Primero activa las notificaciones push.');return;}
-  // Programa una notificación para dentro de 5 segundos
-  await scheduleNotification('test_'+Date.now(),'🔔 Prueba SIGECAC','Esta notificación llega aunque cierres la app',Date.now()+5000);
-  // Pide al SW que compruebe ahora
-  const sw=await navigator.serviceWorker.ready;
-  sw.active&&sw.active.postMessage({type:'CHECK_NOTIFS'});
-  alert('Notificación programada. Cierra la app y en 5 segundos debería sonar.');
+  // Paso 1: pedir permiso si no está
+  if(Notification.permission==='default'){
+    const p=await Notification.requestPermission();
+    if(p!=='granted'){alert('Permiso denegado. Ve a ajustes del navegador y activa notificaciones para esta página.');return;}
+  }
+  if(Notification.permission==='denied'){
+    alert('Notificaciones bloqueadas. Ve a ajustes del navegador → Notificaciones y permite esta página.');
+    return;
+  }
+
+  // Paso 2: mostrar notificación directamente desde el SW (funciona con app en background)
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    await reg.showNotification('🔔 SIGECAC INGENIEROS',{
+      body:'Notificación de prueba — sistema funcionando',
+      icon:'/agm-seccion/icon-192.png',
+      badge:'/agm-seccion/icon-192.png',
+      vibrate:[300,100,300,100,300],
+      requireInteraction:false,
+      tag:'test-notif'
+    });
+    // También programar una para 10s (prueba background real)
+    await scheduleNotification('test_bg_'+Date.now(),'⏰ Prueba background','Esta llega con la app cerrada',Date.now()+10000);
+    const sw=await navigator.serviceWorker.ready;
+    if(sw.active)sw.active.postMessage({type:'CHECK_NOTIFS'});
+  }catch(err){
+    alert('Error: '+err.message+'\n\nAsegúrate de que la app esté instalada en pantalla de inicio.');
+  }
 }
 
 async function activarPush() {
