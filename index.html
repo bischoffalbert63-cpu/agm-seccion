@@ -2313,49 +2313,41 @@ function scheduleAllPendingNotifications() {
 }
 
 async function testPushNotification(){
-  let info='DIAGNÓSTICO NOTIFICACIONES\n\n';
+  const lines=[];
+  const log=s=>lines.push(s);
 
-  // 1. Soporte
-  info+=('Notification' in window)?'✅ Notificaciones soportadas':'❌ NO soportadas';
-  info+='\n';
-  info+=('serviceWorker' in navigator)?'✅ ServiceWorker soportado':'❌ SW NO soportado';
-  info+='\n\n';
+  log('Notificaciones: '+('Notification' in window?'✅ OK':'❌ NO'));
+  log('ServiceWorker: '+('serviceWorker' in navigator?'✅ OK':'❌ NO'));
+  log('Permiso: '+Notification.permission);
 
-  // 2. Permiso actual
-  info+='Permiso actual: '+Notification.permission+'\n';
-
-  // 3. Pedir permiso si hace falta
   if(Notification.permission==='default'){
-    info+='Solicitando permiso...\n';
     const p=await Notification.requestPermission();
-    info+='Resultado: '+p+'\n';
-  }
-  info+='\n';
-
-  // 4. Estado del SW
-  try{
-    const reg=await navigator.serviceWorker.ready;
-    info+='SW activo: '+(reg.active?reg.active.scriptURL:'ninguno')+'\n\n';
-
-    // 5. Intentar notificación directa
-    if(Notification.permission==='granted'){
-      await reg.showNotification('🔔 SIGECAC — PRUEBA',{
-        body:'Si ves esto, las notificaciones funcionan',
-        icon:'/agm-seccion/icon-192.png',
-        vibrate:[400,200,400],
-        tag:'diag-test'
-      });
-      info+='✅ Notificación enviada al SW\n';
-      info+='¿La has visto aparecer?\n';
-    } else {
-      info+='❌ Permiso no concedido — no se puede mostrar notificación\n';
-      info+='Ve a ajustes del navegador → Notificaciones → permite esta web\n';
-    }
-  }catch(err){
-    info+='❌ Error SW: '+err.message+'\n';
+    log('Permiso tras solicitar: '+p);
   }
 
-  alert(info);
+  if(Notification.permission==='granted'){
+    try{
+      const reg=await navigator.serviceWorker.ready;
+      log('SW: '+(reg.active?'activo':'inactivo'));
+      await reg.showNotification('🔔 SIGECAC',{body:'Prueba — '+new Date().toLocaleTimeString(),icon:'/agm-seccion/icon-192.png',vibrate:[300,100,300],tag:'test'});
+      log('✅ Notificación lanzada');
+    }catch(e){log('❌ Error: '+e.message);}
+  }else{
+    log('❌ Sin permiso — actívalo en ajustes del navegador');
+  }
+
+  // Mostrar resultado en modal dentro de la app
+  const existing=document.getElementById('_diag_modal');
+  if(existing)existing.remove();
+  const d=document.createElement('div');
+  d.id='_diag_modal';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  d.innerHTML=`<div style="background:#fff;border-radius:12px;padding:20px;max-width:360px;width:100%;font-family:monospace;font-size:13px">
+    <div style="font-weight:700;margin-bottom:12px;font-family:sans-serif">Diagnóstico notificaciones</div>
+    <div style="line-height:2">${lines.join('<br>')}</div>
+    <button onclick="this.closest('#_diag_modal').remove()" style="margin-top:16px;width:100%;padding:10px;background:#185FA5;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer">Cerrar</button>
+  </div>`;
+  document.body.appendChild(d);
 }
 
 async function activarPush() {
