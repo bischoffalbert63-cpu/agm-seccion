@@ -2316,9 +2316,9 @@ async function testPushNotification(){
   let info='DIAGNÓSTICO NOTIFICACIONES\n\n';
 
   // 1. Soporte
-  info+=''in Notification in window'' in window?'✅ Notificaciones soportadas':'❌ Notificaciones NO soportadas';
+  info+=('Notification' in window)?'✅ Notificaciones soportadas':'❌ NO soportadas';
   info+='\n';
-  info+='serviceWorker' in navigator?'✅ ServiceWorker soportado':'❌ ServiceWorker NO soportado';
+  info+=('serviceWorker' in navigator)?'✅ ServiceWorker soportado':'❌ SW NO soportado';
   info+='\n\n';
 
   // 2. Permiso actual
