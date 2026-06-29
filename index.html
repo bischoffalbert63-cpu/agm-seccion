@@ -14,6 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <style>
@@ -340,6 +341,9 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         <div id="dash-stats" style="display:none"></div>
         <input type="file" id="import-file" accept=".json" style="display:none" onchange="importarDatos(this)">
         <div id="backup-msg" style="display:none"></div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="cambiarPin()" style="background:none;border:1px solid var(--border);color:var(--text-secondary)"><i class="ti ti-lock"></i> Cambiar PIN</button>
+        </div>
       </div>
 
       <!-- CADETES -->
@@ -1650,9 +1654,17 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
     <div style="font-size:28px;font-weight:800;color:#FFFFFF;letter-spacing:0.07em;margin:10px 0 4px;line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,0.4)">SIGECAC<br><span style="color:#D4A830">INGENIEROS</span></div>
 
-    <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;margin-bottom:40px">Sistema de Gestión de Cadetes</div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.08em;margin-bottom:28px">Sistema de Gestión de Cadetes</div>
 
-    <button onclick="hideSplash()" style="background:linear-gradient(135deg,#C9A030,#A07820);color:#06152B;border:none;padding:14px 56px;font-size:13px;font-weight:700;letter-spacing:0.15em;border-radius:3px;cursor:pointer;font-family:var(--font);text-transform:uppercase;box-shadow:0 4px 16px rgba(201,160,48,0.35);transition:transform 0.1s">ACCEDER</button>
+    <div style="width:100%;margin-bottom:14px">
+      <input type="password" id="splash-pin" placeholder="PIN de acceso" maxlength="20"
+        style="width:100%;padding:13px 16px;border:1.5px solid rgba(201,160,48,0.4);border-radius:4px;background:rgba(255,255,255,0.07);color:#fff;font-size:15px;letter-spacing:0.2em;text-align:center;font-family:var(--font);outline:none"
+        onkeydown="if(event.key==='Enter')splashAcceder()"
+        oninput="document.getElementById('splash-error').style.display='none'">
+      <div id="splash-error" style="display:none;font-size:11px;color:#F08080;margin-top:6px;text-align:center">PIN incorrecto</div>
+    </div>
+
+    <button onclick="splashAcceder()" style="background:linear-gradient(135deg,#C9A030,#A07820);color:#06152B;border:none;padding:14px 56px;font-size:13px;font-weight:700;letter-spacing:0.15em;border-radius:3px;cursor:pointer;font-family:var(--font);text-transform:uppercase;box-shadow:0 4px 16px rgba(201,160,48,0.35);transition:transform 0.1s;width:100%">ACCEDER</button>
 
     <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:24px;letter-spacing:0.05em">v1.0 · 4º Curso EMIEO</div>
   </div>
@@ -1693,7 +1705,48 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 </div>
 
 <script>
+// ---- PIN + AUTH ----
+const PIN_DEFAULT='1234'; // PIN por defecto — cambiar en ajustes
+async function _sha256(str){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function splashAcceder(){
+  const input=document.getElementById('splash-pin').value;
+  if(!input){document.getElementById('splash-error').style.display='';document.getElementById('splash-error').textContent='Introduce el PIN';return;}
+  const stored=localStorage.getItem('agm_pin_hash');
+  // Si no hay PIN guardado, el primer acceso con cualquier valor lo establece como PIN (o usar default)
+  const expectedHash=stored||await _sha256(PIN_DEFAULT);
+  const inputHash=await _sha256(input);
+  if(inputHash!==expectedHash){
+    document.getElementById('splash-error').style.display='';
+    document.getElementById('splash-error').textContent='PIN incorrecto';
+    document.getElementById('splash-pin').value='';
+    return;
+  }
+  if(!stored)localStorage.setItem('agm_pin_hash',expectedHash);
+  // Autenticación anónima Firebase
+  if(_fbReady){
+    try{
+      await firebase.auth().signInAnonymously();
+    }catch(e){console.warn('Firebase auth error:',e);}
+  }
+  hideSplash();
+}
 function hideSplash(){const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.style.display='none',500);initAudioCtx();initNotifications();_updateOnlineStatus();setTimeout(renderCalGoogleBtn,500);}
+
+async function cambiarPin(){
+  const actual=prompt('PIN actual:');if(!actual)return;
+  const actualHash=await _sha256(actual);
+  const stored=localStorage.getItem('agm_pin_hash')||await _sha256(PIN_DEFAULT);
+  if(actualHash!==stored){alert('PIN incorrecto');return;}
+  const nuevo=prompt('Nuevo PIN (mínimo 4 caracteres):');
+  if(!nuevo||nuevo.length<4){alert('El PIN debe tener al menos 4 caracteres');return;}
+  const confirmar=prompt('Confirmar nuevo PIN:');
+  if(nuevo!==confirmar){alert('Los PINes no coinciden');return;}
+  localStorage.setItem('agm_pin_hash',await _sha256(nuevo));
+  alert('PIN cambiado correctamente');
+}
 
 function fmtFecha(iso){if(!iso)return'';const[y,m,d]=iso.split('-');return`${d}/${m}/${y}`;}
 // ---- NOTIFICACIONES ----
@@ -2141,6 +2194,7 @@ const _fbConfig={apiKey:"AIzaSyA1KSfaNVrNsPXXGZoHHadUPcchsDBm5DE",authDomain:"ag
 let _fbApp=null,_fbDb=null,_fbSt=null,_fbReady=false;
 try{
   _fbApp=firebase.initializeApp(_fbConfig);
+  firebase.auth(); // inicializar auth
   _fbDb=firebase.firestore();
   // Persistencia offline: Firestore guarda datos en IndexedDB y sincroniza al reconectar
   _fbDb.enablePersistence({synchronizeTabs:true}).catch(e=>{
