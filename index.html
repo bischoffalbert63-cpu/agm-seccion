@@ -17,6 +17,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -343,6 +344,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
         <div id="backup-msg" style="display:none"></div>
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-sm" onclick="cambiarPin()" style="background:none;border:1px solid var(--border);color:var(--text-secondary)"><i class="ti ti-lock"></i> Cambiar PIN</button>
+          <button class="btn btn-sm" onclick="activarPush()" style="background:none;border:1px solid var(--border);color:var(--text-secondary)" id="btn-push"><i class="ti ti-bell-ringing"></i> Activar notificaciones push</button>
         </div>
       </div>
 
@@ -1733,7 +1735,7 @@ async function splashAcceder(){
   }
   hideSplash();
 }
-function hideSplash(){const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.style.display='none',500);initAudioCtx();initNotifications();_updateOnlineStatus();setTimeout(renderCalGoogleBtn,500);}
+function hideSplash(){const s=document.getElementById('splash');s.style.opacity='0';setTimeout(()=>s.style.display='none',500);initAudioCtx();initNotifications();_updateOnlineStatus();setTimeout(renderCalGoogleBtn,500);setTimeout(initPushNotifications,1000);setTimeout(scheduleAllPendingNotifications,2000);}
 
 async function cambiarPin(){
   const actual=prompt('PIN actual:');if(!actual)return;
@@ -2204,6 +2206,129 @@ try{
   _fbSt=firebase.storage();
   _fbReady=true;
 }catch(e){console.warn('Firebase init error:',e);}
+
+// ---- PUSH NOTIFICATIONS (FCM + Periodic Background Sync) ----
+// VAPID key: obtener en Firebase Console → Messaging → Configuración web → par de claves
+const FCM_VAPID_KEY = state.fcmVapidKey || '';
+
+async function initPushNotifications() {
+  if (!('Notification' in window)) return;
+  // Solicitar permiso si no está concedido
+  let perm = Notification.permission;
+  if (perm === 'default') perm = await Notification.requestPermission();
+  if (perm !== 'granted') return;
+
+  // Registrar Periodic Background Sync (Chrome Android, app instalada)
+  if ('serviceWorker' in navigator && 'periodicSync' in (await navigator.serviceWorker.ready)) {
+    try {
+      const sw = await navigator.serviceWorker.ready;
+      await sw.periodicSync.register('agm-reminders', { minInterval: 15 * 60 * 1000 });
+    } catch(e) { console.warn('Periodic sync no disponible:', e); }
+  }
+
+  // FCM token (requiere VAPID key configurada)
+  if (!FCM_VAPID_KEY || !_fbReady) return;
+  try {
+    const messaging = firebase.messaging();
+    const token = await messaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: await navigator.serviceWorker.ready });
+    if (token) {
+      localStorage.setItem('fcm_token', token);
+      // Guardar token en Firestore para poder enviar notificaciones desde Cloud Functions
+      if (_fbDb) _fbDb.collection('fcm_tokens').doc('main').set({ token, updated: new Date().toISOString() });
+    }
+    // Mensajes en primer plano (app abierta)
+    messaging.onMessage(payload => {
+      const { title, body } = payload.notification || {};
+      showInAppReminder('🔔', title || 'Recordatorio', body || '', '', '', '#185FA5');
+    });
+  } catch(e) { console.warn('FCM token error:', e); }
+}
+
+// Guarda una notificación programada en IndexedDB para que el SW la dispare en background
+async function scheduleNotification(id, title, body, fireAt) {
+  try {
+    const req = indexedDB.open('agm-notifs', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('notifs', { keyPath: 'id' });
+    req.onsuccess = e => {
+      const db = e.target.result;
+      const tx = db.transaction('notifs', 'readwrite');
+      tx.objectStore('notifs').put({ id, title, body, fireAt });
+    };
+  } catch(e) { console.warn('scheduleNotification error', e); }
+}
+
+// Cancela una notificación programada
+async function cancelNotification(id) {
+  try {
+    const req = indexedDB.open('agm-notifs', 1);
+    req.onsuccess = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('notifs')) return;
+      const tx = db.transaction('notifs', 'readwrite');
+      tx.objectStore('notifs').delete(id);
+    };
+  } catch(e) {}
+}
+
+// Programa en IndexedDB todas las notificaciones próximas (próximos 7 días)
+function scheduleAllPendingNotifications() {
+  if (Notification.permission !== 'granted') return;
+  const now = Date.now();
+  const limit = now + 7 * 24 * 60 * 60 * 1000;
+
+  // Tareas propias
+  (state.misTareas || []).filter(t => !t.done && t.fechaLimite).forEach(t => {
+    const base = new Date(t.fechaLimite + 'T' + (t.horaInicio || '08:00') + ':00');
+    const dayBefore = new Date(base); dayBefore.setDate(dayBefore.getDate() - 1); dayBefore.setHours(20, 0, 0, 0);
+    const thirtyMin = new Date(base.getTime() - 30 * 60 * 1000);
+    if (dayBefore.getTime() > now && dayBefore.getTime() < limit)
+      scheduleNotification('mt_day_' + t.id, '🔔 Tarea mañana', t.desc, dayBefore.getTime());
+    if (thirtyMin.getTime() > now && thirtyMin.getTime() < limit)
+      scheduleNotification('mt_30_' + t.id, '⏰ Tarea en 30 min', t.desc, thirtyMin.getTime());
+  });
+
+  // Eventos
+  (state.eventos || []).filter(e => e.fechaIni).forEach(e => {
+    const base = new Date(e.fechaIni + 'T' + (e.horaIni || '08:00') + ':00');
+    const dayBefore = new Date(base); dayBefore.setDate(dayBefore.getDate() - 1); dayBefore.setHours(20, 0, 0, 0);
+    const thirtyMin = new Date(base.getTime() - 30 * 60 * 1000);
+    if (dayBefore.getTime() > now && dayBefore.getTime() < limit)
+      scheduleNotification('ev_day_' + e.id, '📅 Evento mañana', e.titulo, dayBefore.getTime());
+    if (thirtyMin.getTime() > now && thirtyMin.getTime() < limit)
+      scheduleNotification('ev_30_' + e.id, '📅 Evento en 30 min', e.titulo, thirtyMin.getTime());
+  });
+
+  // Clases
+  (state.clases || []).filter(c => c.fecha).forEach(c => {
+    const asig = (CLASES_ASIG[c.asig] || {}).label || 'Clase';
+    const base = new Date(c.fecha + 'T' + (c.horaIni || '08:00') + ':00');
+    const dayBefore = new Date(base); dayBefore.setDate(dayBefore.getDate() - 1); dayBefore.setHours(20, 0, 0, 0);
+    const thirtyMin = new Date(base.getTime() - 30 * 60 * 1000);
+    if (dayBefore.getTime() > now && dayBefore.getTime() < limit)
+      scheduleNotification('cl_day_' + c.id, '🎓 Clase mañana', asig + (c.tema ? ' · ' + c.tema : ''), dayBefore.getTime());
+    if (thirtyMin.getTime() > now && thirtyMin.getTime() < limit)
+      scheduleNotification('cl_30_' + c.id, '🎓 Clase en 30 min', asig + (c.tema ? ' · ' + c.tema : ''), thirtyMin.getTime());
+  });
+}
+
+async function activarPush() {
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') { alert('Permiso de notificaciones denegado. Actívalo en los ajustes del navegador.'); return; }
+  await initPushNotifications();
+  scheduleAllPendingNotifications();
+  const btn = document.getElementById('btn-push');
+  if (btn) { btn.innerHTML = '<i class="ti ti-check"></i> Notificaciones activas'; btn.style.color = '#2E8B4A'; btn.style.borderColor = '#2E8B4A'; }
+  alert('✅ Notificaciones push activadas.\n\nPara recibir alertas con la app cerrada, asegúrate de tener la app instalada en pantalla de inicio (Añadir a pantalla de inicio).');
+}
+
+// Configura la VAPID key desde el dashboard
+function guardarVapidKey() {
+  const k = prompt('Pega aquí la VAPID key (Firebase Console → Messaging → Configuración web):');
+  if (!k || k.length < 20) { alert('Clave inválida'); return; }
+  state.fcmVapidKey = k.trim();
+  save();
+  alert('VAPID key guardada. Reinicia la app para activar las notificaciones push.');
+}
 
 // ---- INDICADOR ONLINE/OFFLINE ----
 function _updateOnlineStatus(){
