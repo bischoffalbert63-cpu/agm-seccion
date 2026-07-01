@@ -1,7 +1,7 @@
 // SW v25
 const CACHE='agm-v25';
 const BASE='/agm-seccion';
-const ASSETS=[BASE+'/',BASE+'/index.html',BASE+'/manifest.json',BASE+'/icon-192.png'];
+const ASSETS=[BASE+'/manifest.json',BASE+'/icon-192.png'];
 const ICON=BASE+'/icon-192.png';
 
 self.addEventListener('install',e=>{
