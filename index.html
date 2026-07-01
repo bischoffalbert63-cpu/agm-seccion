@@ -2109,25 +2109,36 @@ async function gcalFetchAll(){
   const max=new Date(now.getFullYear(),now.getMonth()+3,1).toISOString();
   _gcalEvents=[];
   try{
-    const evRes=await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${min}&timeMax=${max}&singleEvents=true&orderBy=startTime&maxResults=250`,
+    // Obtener lista de todos los calendarios
+    const calListRes=await fetch('https://www.googleapis.com/calendar/v3/users/me/calendarList',
       {headers:{Authorization:'Bearer '+_gcalToken}});
-    if(evRes.status===401){gcalDisconnect();if(statusEl)statusEl.textContent='❌ Token caducado — vuelve a conectar';return;}
-    const evData=await evRes.json();
-    if(evData.error){if(statusEl)statusEl.textContent='❌ Error: '+evData.error.message;return;}
-    (evData.items||[]).forEach(ev=>{
-      const start=ev.start.dateTime||ev.start.date;
-      _gcalEvents.push({
-        id:'gcal_'+ev.id,
-        titulo:ev.summary||'(sin título)',
-        fecha:start?start.slice(0,10):'',
-        hora:ev.start.dateTime?ev.start.dateTime.slice(11,16):'',
-        horaFin:ev.end&&ev.end.dateTime?ev.end.dateTime.slice(11,16):'',
-        lugar:ev.location||'',
-        notas:ev.description||'',
-        tipo:'gcal',
-        color:'#1A73E8'
-      });
-    });
+    if(calListRes.status===401){gcalDisconnect();if(statusEl)statusEl.textContent='❌ Token caducado — vuelve a conectar';return;}
+    const calListData=await calListRes.json();
+    if(calListData.error){if(statusEl)statusEl.textContent='❌ Error: '+calListData.error.message;return;}
+    const calendars=(calListData.items||[]).filter(c=>c.selected!==false);
+    // Descargar eventos de cada calendario
+    for(const cal of calendars){
+      try{
+        const evRes=await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(cal.id)}/events?timeMin=${min}&timeMax=${max}&singleEvents=true&orderBy=startTime&maxResults=250`,
+          {headers:{Authorization:'Bearer '+_gcalToken}});
+        if(!evRes.ok)continue;
+        const evData=await evRes.json();
+        (evData.items||[]).forEach(ev=>{
+          const start=ev.start.dateTime||ev.start.date;
+          _gcalEvents.push({
+            id:'gcal_'+ev.id,
+            titulo:ev.summary||'(sin título)',
+            fecha:start?start.slice(0,10):'',
+            hora:ev.start.dateTime?ev.start.dateTime.slice(11,16):'',
+            horaFin:ev.end&&ev.end.dateTime?ev.end.dateTime.slice(11,16):'',
+            lugar:ev.location||'',
+            notas:ev.description||'',
+            tipo:'gcal',
+            color:cal.backgroundColor||'#1A73E8'
+          });
+        });
+      }catch(e){}
+    }
     // Tasks de Google Tasks
     try{
       const tlRes=await fetch('https://tasks.googleapis.com/tasks/v1/users/@me/lists',
