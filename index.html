@@ -331,7 +331,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 
       <!-- CAPITÃN JEFE DE SECCIÃ"N (dashboard) -->
       <div id="tab-dashboard" class="tab-content active">
-        <div class="section-header"><span class="section-title">Capitán jefe de sección</span><div style="display:flex;gap:6px"><button class="btn btn-sm" style="background:#2E8B4A;color:#fff;border:none" onclick="openParteDiario()"><i class="ti ti-clipboard-text"></i> Parte diario</button><button class="btn btn-sm" style="background:#185FA5;color:#fff;border:none" onclick="printAllInformes()"><i class="ti ti-file-type-pdf"></i> PDF Sección</button></div></div>
+        <div class="section-header"><span class="section-title">Capitán jefe de sección</span><div style="display:flex;gap:6px"><button class="btn btn-sm" style="background:#185FA5;color:#fff;border:none" onclick="printAllInformes()"><i class="ti ti-file-type-pdf"></i> PDF Sección</button></div></div>
         <div id="dash-alerts"></div>
         <div class="grid4" id="dash-metrics" style="margin-bottom:10px"></div>
         <div class="card">
@@ -1095,25 +1095,6 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 </div>
 
 <!-- MODAL PARTE DIARIO -->
-<div id="modal-parte" class="modal-overlay hidden">
-  <div class="modal" style="max-width:520px;width:95%">
-    <div class="modal-header">
-      <span class="modal-title"><i class="ti ti-clipboard-text" style="margin-right:6px"></i>Parte diario</span>
-      <button class="modal-close" onclick="closeModal('modal-parte')">×</button>
-    </div>
-    <div class="modal-body" style="padding:0">
-      <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-        <label style="font-size:12px;color:var(--text-secondary)">Fecha del parte</label>
-        <input type="date" id="parte-fecha" style="width:100%;margin-top:4px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:var(--font);font-size:13px;background:var(--surface)" onchange="generarParte()">
-      </div>
-      <div id="parte-preview" style="padding:14px;white-space:pre-wrap;font-family:monospace;font-size:12px;line-height:1.6;max-height:55vh;overflow-y:auto;background:var(--bg)"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modal-parte')">Cerrar</button>
-      <button class="btn btn-primary" onclick="copiarParte()"><i class="ti ti-copy"></i> Copiar</button>
-    </div>
-  </div>
-</div>
 
 <!-- MODAL SANCION -->
 <div id="modal-tutoria" class="modal-overlay hidden">
@@ -5710,11 +5691,6 @@ function delObraDoc(id){
 }
 
 // ---- PARTE DIARIO ----
-function openParteDiario(){
-  document.getElementById('parte-fecha').value=todayStr();
-  generarParte();
-  openModal('modal-parte');
-}
 function generarParte(){
   const fecha=document.getElementById('parte-fecha').value||todayStr();
   const [y,m,d]=fecha.split('-');
