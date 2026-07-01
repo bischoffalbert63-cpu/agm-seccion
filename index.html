@@ -539,7 +539,14 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
               <span style="font-size:10px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#C47A1E;display:inline-block"></span>Tarea cadete</span>
               <span style="font-size:10px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#1A73E8;display:inline-block"></span>Google Cal</span>
             </div>
-            <div id="gcal-btn-wrap" style="display:flex;gap:4px;align-items:center"></div>
+            <div id="gcal-btn-wrap" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"></div>
+            <div style="margin-top:6px">
+              <label class="btn btn-sm" style="background:#0078D4;color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+                <i class="ti ti-calendar-import"></i> Importar ICS (Outlook)
+                <input type="file" accept=".ics" style="display:none" onchange="importarICS(this)">
+              </label>
+              <span id="ics-import-status" style="font-size:11px;color:var(--text-secondary);margin-left:8px"></span>
+            </div>
           </div>
           <!-- Config Client ID (oculta si ya conectado) -->
           <div id="gcal-config-wrap" style="margin-top:8px;display:none">
@@ -2144,6 +2151,49 @@ async function gcalFetchAll(){
 
 function gcalGetEventsForDay(fecha){
   return _gcalEvents.filter(e=>e.fecha===fecha);
+}
+
+function importarICS(input){
+  const file=input.files[0];if(!file)return;
+  const status=document.getElementById('ics-import-status');
+  status.textContent='Leyendo...';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const text=e.target.result;
+      const events=[];
+      const vevents=text.split('BEGIN:VEVENT');
+      vevents.shift();
+      for(const ve of vevents){
+        const get=prop=>{
+          const m=ve.match(new RegExp(prop+'(?:;[^:]*)?:([^\\r\\n]+)'));
+          return m?m[1].replace(/\\n/g,'\n').replace(/\\,/g,',').replace(/\\;/g,';').trim():'';
+        };
+        const dtstart=get('DTSTART');
+        const dtend=get('DTEND');
+        const summary=get('SUMMARY');
+        const location=get('LOCATION');
+        const desc=get('DESCRIPTION');
+        if(!summary||!dtstart)continue;
+        const parseICSDate=s=>{
+          s=s.replace(/^.*:/,'');
+          if(s.length===8)return{date:s.slice(0,4)+'-'+s.slice(4,6)+'-'+s.slice(6,8),time:''};
+          const y=s.slice(0,4),mo=s.slice(4,6),d=s.slice(6,8),h=s.slice(9,11),mi=s.slice(11,13);
+          return{date:`${y}-${mo}-${d}`,time:`${h}:${mi}`};
+        };
+        const ini=parseICSDate(dtstart);
+        const fin=dtend?parseICSDate(dtend):{date:'',time:''};
+        events.push({id:state.nextId.eventos++,titulo:summary,desc:desc||'',fechaIni:ini.date,horaIni:ini.time,fechaFin:fin.date||ini.date,horaFin:fin.time,lugar:location||'',color:'#0078D4',fromICS:true});
+      }
+      // Eliminar eventos ICS anteriores y añadir los nuevos
+      state.eventos=(state.eventos||[]).filter(ev=>!ev.fromICS);
+      state.eventos.push(...events);
+      save();renderCal();
+      status.innerHTML=`<span style="color:#2E8B4A">✅ ${events.length} eventos importados</span>`;
+      input.value='';
+    }catch(err){status.innerHTML=`<span style="color:#c00">❌ Error: ${err.message}</span>`;}
+  };
+  reader.readAsText(file,'UTF-8');
 }
 
 function renderCalGoogleBtn(){
