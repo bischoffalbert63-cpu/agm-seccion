@@ -1,5 +1,5 @@
-// SW v24
-const CACHE='agm-v24';
+// SW v25
+const CACHE='agm-v25';
 const BASE='/agm-seccion';
 const ASSETS=[BASE+'/',BASE+'/index.html',BASE+'/manifest.json',BASE+'/icon-192.png'];
 const ICON=BASE+'/icon-192.png';

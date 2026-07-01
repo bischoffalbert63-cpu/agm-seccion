@@ -107,6 +107,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
 .form-row{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
 .form-row label{font-size:12px;color:var(--text-secondary)}
 .form-row input,.form-row select,.form-row textarea{width:100%;padding:10px 12px;border:0.5px solid var(--border-t);border-radius:var(--radius-md);font-family:var(--font);font-size:15px;background:var(--bg-primary);color:var(--text-primary);-webkit-appearance:none}
+.form-row input[type="time"],.form-row input[type="date"]{-webkit-appearance:auto;appearance:auto;cursor:pointer}
 .form-row textarea{resize:vertical;min-height:80px}
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .form-grid3{display:grid;grid-template-columns:1fr;gap:10px}
@@ -309,7 +310,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
     <div class="topbar-right">
       <button class="btn btn-icon" onclick="openSearch()" title="Buscar" style="font-size:20px;color:var(--text-secondary)"><i class="ti ti-search"></i></button>
       <button class="btn btn-icon" onclick="location.reload()" title="Recargar" style="font-size:20px;color:var(--text-secondary)"><i class="ti ti-refresh"></i></button>
-      <span id="app-ver" style="font-size:10px;color:var(--text-tertiary);padding:2px 6px;background:var(--bg-tertiary);border-radius:8px;cursor:pointer" onclick="diagNotif()" title="Tap para diagnóstico notificaciones">v23</span>
+      <span id="app-ver" style="font-size:10px;color:var(--text-tertiary);padding:2px 6px;background:var(--bg-tertiary);border-radius:8px;cursor:pointer" onclick="diagNotif()" title="Tap para diagnóstico notificaciones">v25</span>
       <span id="sync-indicator" title="Sincronización" style="font-size:18px;color:var(--text-tertiary);padding:4px;display:none"><i class="ti ti-cloud-check"></i></span>
       <span id="offline-badge" title="Sin conexión — los cambios se guardarán al reconectar" style="display:none;align-items:center;gap:4px;background:#BA7517;color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;letter-spacing:.04em"><i class="ti ti-wifi-off" style="font-size:13px"></i>SIN CONEXIÓN</span>
       <img src="escudo-inf.png" alt="" style="width:44px;height:44px;object-fit:contain;mix-blend-mode:multiply">
@@ -2313,23 +2314,75 @@ function scheduleAllPendingNotifications() {
   });
 }
 
-function diagNotif(){
-  const d=document.createElement('div');
-  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+async function diagNotif(){
+  const existing=document.getElementById('_diag_overlay');if(existing)existing.remove();
+  const d=document.createElement('div');d.id='_diag_overlay';
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box';
+
   const notifOk='Notification' in window;
   const swOk='serviceWorker' in navigator;
   const perm=notifOk?Notification.permission:'N/A';
-  d.innerHTML=`<div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;font-size:14px;line-height:1.8">
-    <b style="font-size:15px">Diagnóstico — v23</b><br><br>
-    Notificaciones: <b>${notifOk?'✅':'❌'}</b><br>
-    ServiceWorker: <b>${swOk?'✅':'❌'}</b><br>
-    Permiso: <b>${perm}</b><br>
+  const standalone=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone===true;
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+
+  // Detectar caché SW activa
+  let swVer='desconocida';
+  let swScope='';
+  try{
+    const keys=await caches.keys();
+    swVer=keys.filter(k=>k.startsWith('agm-')).join(', ')||'ninguna';
+    const reg=await navigator.serviceWorker.getRegistration();
+    if(reg){swScope=reg.scope;if(reg.waiting)swVer+=' ⚠️ hay SW en espera';}
+  }catch(e){swVer='error: '+e.message;}
+
+  d.innerHTML=`<div style="background:#fff;border-radius:14px;padding:22px;max-width:360px;width:100%;font-size:13px;line-height:2;color:#222">
+    <div style="font-weight:700;font-size:15px;margin-bottom:4px">🔔 Diagnóstico — v25</div>
+    <div style="font-size:11px;color:#888;margin-bottom:14px">${swScope}</div>
+    Notificaciones API: <b>${notifOk?'✅':'❌'}</b><br>
+    Service Worker: <b>${swOk?'✅':'❌'}</b><br>
+    Permiso: <b>${perm==='granted'?'✅ granted':perm==='denied'?'❌ denied':'⚠️ '+perm}</b><br>
+    Caché SW activa: <b>${swVer}</b><br>
+    Modo standalone: <b>${standalone?'✅ Sí (instalada)':'❌ No (navegador)'}</b><br>
+    iOS: <b>${isIOS?'Sí':'No'}</b><br>
+    ${isIOS&&!standalone?'<br><b style="color:#c00">⚠️ En iOS las notificaciones solo funcionan si la app está añadida a la pantalla de inicio (Safari → Compartir → Añadir a inicio)</b><br>':''}
     <br>
-    <button onclick="(async()=>{try{const r=await navigator.serviceWorker.ready;r.active.postMessage({type:'TEST_NOTIF'});document.getElementById('_dp').textContent='✅ Enviado al SW — mira el panel de notificaciones';} catch(e){document.getElementById('_dp').textContent='❌ '+e.message;}})()" style="padding:8px 14px;background:#2E8B4A;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-right:8px">🔔 Lanzar ahora</button>
-    <button onclick="this.closest('div[style]').remove()" style="padding:8px 14px;border:1px solid #ccc;border-radius:8px;cursor:pointer">Cerrar</button>
-    <div id="_dp" style="margin-top:10px;font-size:13px;color:#555"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button id="_dp_btn" onclick="window._launchTestNotif()" style="padding:9px 14px;background:#2E8B4A;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">🔔 Lanzar ahora</button>
+      <button onclick="window._forceSwUpdate()" style="padding:9px 14px;background:#185FA5;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">🔄 Forzar actualización SW</button>
+      <button onclick="document.getElementById('_diag_overlay').remove()" style="padding:9px 14px;border:1px solid #ccc;border-radius:8px;cursor:pointer;font-size:13px">Cerrar</button>
+    </div>
+    <div id="_dp" style="margin-top:12px;font-size:12px;color:#444;min-height:18px"></div>
   </div>`;
   document.body.appendChild(d);
+
+  window._launchTestNotif=async()=>{
+    const el=document.getElementById('_dp');
+    const btn=document.getElementById('_dp_btn');
+    if(btn){btn.disabled=true;btn.textContent='Enviando...';}
+    try{
+      if(Notification.permission!=='granted'){el.textContent='❌ Permiso no concedido';return;}
+      const reg=await navigator.serviceWorker.ready;
+      await reg.showNotification('🔔 SIGECAC INGENIEROS',{
+        body:'Prueba de notificación — '+new Date().toLocaleTimeString('es-ES'),
+        icon:'/agm-seccion/icon-192.png',badge:'/agm-seccion/icon-192.png',
+        vibrate:[400,200,400],tag:'test-'+Date.now(),requireInteraction:false
+      });
+      el.innerHTML='<span style="color:#2E8B4A">✅ Notificación enviada — comprueba el panel de notificaciones del móvil</span>';
+    }catch(e){el.innerHTML='<span style="color:#c00">❌ Error: '+e.message+'</span>';}
+    if(btn){btn.disabled=false;btn.textContent='🔔 Lanzar ahora';}
+  };
+
+  window._forceSwUpdate=async()=>{
+    const el=document.getElementById('_dp');
+    try{
+      const reg=await navigator.serviceWorker.getRegistration();
+      if(reg){
+        await reg.update();
+        if(reg.waiting){reg.waiting.postMessage({type:'SKIP_WAITING'});el.textContent='✅ SW actualizado — recarga la app';}
+        else{el.textContent='ℹ️ No hay SW en espera. Puede que ya estés en la última versión. Cierra y vuelve a abrir la app.';}
+      }else{el.textContent='❌ No hay SW registrado';}
+    }catch(e){el.innerHTML='<span style="color:#c00">❌ '+e.message+'</span>';}
+  };
 }
 async function testPushNotification(){
   const lines=[];
@@ -3399,7 +3452,7 @@ function openPlanActividadModal(id){
   document.getElementById('plan-act-fecha').value=a?a.fecha:(state.selectedCalDay||todayStr());
   document.getElementById('plan-act-fecha-fin').value=a?a.fechaFin||'':'';
   document.getElementById('plan-act-titulo').value=a?a.titulo:'';
-  document.getElementById('plan-act-tipo').value=a?a.tipo:'instruccion';
+  document.getElementById('plan-act-tipo').value=a?a.tipo:'icon';
   document.getElementById('plan-act-obs').value=a?a.obs:'';
   document.getElementById('plan-act-del-btn').style.display=a?'':'none';
   document.getElementById('modal-plan-act').classList.remove('hidden');
