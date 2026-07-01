@@ -540,6 +540,7 @@ body{font-family:var(--font);background:var(--bg-tertiary);color:var(--text-prim
               <span style="font-size:10px;color:var(--text-tertiary);display:flex;align-items:center;gap:4px"><span style="width:7px;height:7px;border-radius:50%;background:#1A73E8;display:inline-block"></span>Google Cal</span>
             </div>
             <div id="gcal-btn-wrap" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap"></div>
+            <div id="gcal-fetch-status" style="font-size:11px;color:var(--text-secondary);margin-top:4px"></div>
             <div style="margin-top:6px">
               <label class="btn btn-sm" style="background:#0078D4;color:#fff;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
                 <i class="ti ti-calendar-import"></i> Importar ICS (Outlook)
@@ -2100,17 +2101,19 @@ function gcalDisconnect(){
 }
 
 async function gcalFetchAll(){
-  if(!_gcalToken)return;
+  const statusEl=document.getElementById('gcal-fetch-status');
+  if(!_gcalToken){if(statusEl)statusEl.textContent='Sin token — reconecta Google Calendar';return;}
+  if(statusEl)statusEl.textContent='Cargando...';
   const now=new Date();
   const min=new Date(now.getFullYear(),now.getMonth()-1,1).toISOString();
   const max=new Date(now.getFullYear(),now.getMonth()+3,1).toISOString();
   _gcalEvents=[];
   try{
-    // Eventos del calendario principal
     const evRes=await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${min}&timeMax=${max}&singleEvents=true&orderBy=startTime&maxResults=250`,
       {headers:{Authorization:'Bearer '+_gcalToken}});
-    if(evRes.status===401){gcalDisconnect();return;}
+    if(evRes.status===401){gcalDisconnect();if(statusEl)statusEl.textContent='❌ Token caducado — vuelve a conectar';return;}
     const evData=await evRes.json();
+    if(evData.error){if(statusEl)statusEl.textContent='❌ Error: '+evData.error.message;return;}
     (evData.items||[]).forEach(ev=>{
       const start=ev.start.dateTime||ev.start.date;
       _gcalEvents.push({
@@ -2145,7 +2148,8 @@ async function gcalFetchAll(){
         });
       }
     }catch(e){console.warn('Google Tasks error',e);}
-  }catch(e){console.error('GCal fetch error',e);}
+  }catch(e){if(statusEl)statusEl.textContent='❌ Error: '+e.message;console.error('GCal fetch error',e);}
+  if(statusEl&&statusEl.textContent==='Cargando...')statusEl.innerHTML='<span style="color:#2E8B4A">✅ '+_gcalEvents.length+' eventos cargados</span>';
   renderCal();
 }
 
