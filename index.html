@@ -2115,7 +2115,7 @@ async function gcalFetchAll(){
     if(calListRes.status===401){gcalDisconnect();if(statusEl)statusEl.textContent='❌ Token caducado — vuelve a conectar';return;}
     const calListData=await calListRes.json();
     if(calListData.error){if(statusEl)statusEl.textContent='❌ Error: '+calListData.error.message;return;}
-    const calendars=(calListData.items||[]).filter(c=>c.selected!==false);
+    const calendars=(calListData.items||[]);
     // Descargar eventos de cada calendario
     for(const cal of calendars){
       try{
